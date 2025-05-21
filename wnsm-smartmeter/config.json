@@ -1,10 +1,16 @@
 {
     "name": "Wiener Netze Smartmeter Sync Dev",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "slug": "wnsm_smartmeter",
     "description": "Integration for Wiener Netze Smart Meter that fetches 15-min consumption data and pushes to Home Assistant statistics.",
     "url": "https://github.com/ZakiZtraki/haos-addon-wnsm-dev",
-    "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
+    "arch": [
+        "armhf",
+        "armv7",
+        "aarch64",
+        "amd64",
+        "i386"
+    ],
     "startup": "application",
     "boot": "auto",
     "map": [],
@@ -41,5 +47,4 @@
     "services": [
         "mqtt:need"
     ]
-
 }
