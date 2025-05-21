@@ -24,7 +24,7 @@ logger = logging.getLogger("wnsm_sync")
 
 # === CONFIGURATION ===
 # Configuration from environment variables with fallbacks to options.json
-def get_config():
+def load_config():
     """Load configuration from environment or options.json file."""
     config = {
         "USERNAME": os.getenv("WNSM_USERNAME"),
@@ -40,7 +40,7 @@ def get_config():
         "RETRY_DELAY": int(os.getenv("RETRY_DELAY", "10")),
         "SESSION_FILE": os.getenv("SESSION_FILE", "/data/wnsm_session.json")
     }
-    
+
     # If any required values are missing, fall back to options.json
     required_keys = ["USERNAME", "PASSWORD", "ZP"]
     if not all(config.get(key) for key in required_keys):
@@ -48,7 +48,8 @@ def get_config():
         try:
             with open("/data/options.json") as f:
                 opts = json.load(f)
-            
+                logger.warning("options.json not found, using environment variables")
+                opts = {}
             # Map options to config with our specific prefix
             config.update({
                 "USERNAME": opts.get("WNSM_USERNAME", config["USERNAME"]),
@@ -205,7 +206,7 @@ def main():
     logger.info("==== Wiener Netze Smart Meter Sync starting ====")
     
     # Load configuration
-    config = get_config()
+    config = load_config()
     logger.info(f"Configuration loaded, using username: {config['USERNAME']}")
     
     # Import here to avoid early import errors
@@ -287,3 +288,4 @@ if __name__ == "__main__":
     except Exception as e:
         logger.critical(f"Unexpected error: {e}", exc_info=True)
         sys.exit(1)
+
