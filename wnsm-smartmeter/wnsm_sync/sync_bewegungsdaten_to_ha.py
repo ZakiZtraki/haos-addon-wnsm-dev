@@ -124,6 +124,54 @@ def load_session(client, config):
         logger.error(f"Failed to load session: {e}")
     return False
 
+def parse_mqtt_host(mqtt_host):
+    """Parse MQTT host string to extract protocol, hostname and port."""
+    if not mqtt_host:
+        return "localhost", 1883
+        
+    # If it's a URL format (mqtt://host:port)
+    if "://" in mqtt_host:
+        parts = mqtt_host.split("://")
+        # protocol = parts[0]  # mqtt or mqtts
+        host_port = parts[1]
+        
+        if ":" in host_port:
+            host, port = host_port.split(":")
+            return host, int(port)
+        return host_port, 1883
+    
+    # If it's just a hostname or hostname:port
+    if ":" in mqtt_host:
+        host, port = mqtt_host.split(":")
+        return host, int(port)
+    
+    return mqtt_host, 1883
+
+def publish_mqtt_message(topic, payload, config):
+    """Publish a message to MQTT with consistent host/port handling."""
+    try:
+        host, port = parse_mqtt_host(config.get("MQTT_HOST", ""))
+        
+        auth = None
+        if config.get("MQTT_USERNAME") or config.get("MQTT_PASSWORD"):
+            auth = {
+                "username": config.get("MQTT_USERNAME", ""),
+                "password": config.get("MQTT_PASSWORD", "")
+            }
+        
+        publish.single(
+            topic=topic,
+            payload=json.dumps(payload),
+            hostname=host,
+            port=port,
+            auth=auth,
+            retain=True
+        )
+        return True
+    except Exception as e:
+        logger.error(f"Failed to publish to {topic}: {e}")
+        return False
+
 def publish_mqtt_discovery(config):
     """Publish MQTT discovery configuration for Home Assistant."""
     try:
