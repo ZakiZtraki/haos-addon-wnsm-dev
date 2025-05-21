@@ -26,7 +26,7 @@ This add-on integrates your Wiener Netze Smart Meter data with Home Assistant vi
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| UPDATE_INTERVAL | Data update interval in seconds | 3600 (1 hour) |
+| UPDATE_INTERVAL | Data update interval in seconds | 86400 (24 hour) |
 
 ## How it works
 
