@@ -1,0 +1,20 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Start the Wiener Netze Smart Meter service
+# ==============================================================================
+
+# Export required options as environment variables
+export WNSM_USERNAME=$(bashio::config 'WNSM_USERNAME')
+export WNSM_PASSWORD=$(bashio::config 'WNSM_PASSWORD')
+export ZP=$(bashio::config 'ZP')
+export MQTT_HOST=$(bashio::config 'MQTT_HOST')
+export MQTT_PORT=$(bashio::config 'MQTT_PORT')
+export MQTT_USERNAME=$(bashio::config 'MQTT_USERNAME')
+export MQTT_PASSWORD=$(bashio::config 'MQTT_PASSWORD')
+export MQTT_TOPIC=$(bashio::config 'MQTT_TOPIC')
+export UPDATE_INTERVAL=$(bashio::config 'UPDATE_INTERVAL')
+
+bashio::log.info "Starting Wiener Netze Smart Meter service..."
+
+# Run the application
+python3 /app/run.py
