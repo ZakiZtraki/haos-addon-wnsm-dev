@@ -77,8 +77,7 @@ def load_config():
     for key in required_keys:
         if not config.get(key):
             logger.error(f"Missing required configuration: {key}")
-            sys.exit(1)
-    
+        sys.exit(1)
     return config
 
 def with_retry(func, config, *args, **kwargs):
