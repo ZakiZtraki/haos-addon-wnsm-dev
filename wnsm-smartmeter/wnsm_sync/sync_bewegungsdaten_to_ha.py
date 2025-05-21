@@ -74,11 +74,11 @@ def load_config():
             logger.error(f"Error loading options.json: {e}")
     
     # Ensure we have the critical values
-    for key in required_keys:
-        if not config.get(key):
-            logger.error(f"Missing required configuration: {key}")
-        sys.exit(1)
-    return config
+    # for key in required_keys:
+    #     if not config.get(key):
+    #         logger.error(f"Missing required configuration: {key}")
+    #     sys.exit(1)
+    # return config
 
 def with_retry(func, config, *args, **kwargs):
     """Execute function with retry logic."""
