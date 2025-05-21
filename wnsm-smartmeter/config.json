@@ -15,7 +15,8 @@
     "codenotary": "admins@zenmedia.live",
     "options": {
         "WNSM_USERNAME": "",
-        "WNSM_PASSWORD": ""
+        "WNSM_PASSWORD": "",
+        "USE_EXTERNAL_MQTT": false
     },
     "schema": {
         "WNSM_USERNAME": "str",

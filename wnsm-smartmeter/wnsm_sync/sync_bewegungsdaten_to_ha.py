@@ -27,17 +27,22 @@ logger = logging.getLogger("wnsm_smartmeter")
 def load_config():
     """Load configuration from environment or options.json file."""
     config = {
+        # Required parameters from user
         "USERNAME": os.getenv("WNSM_USERNAME"),
         "PASSWORD": os.getenv("WNSM_PASSWORD"),
+        "USE_EXTERNAL_MQTT": os.getenv("USE_EXTERNAL_MQTT"),
+        # Optional parameters with defaults
         "HA_URL": os.getenv("HA_URL", "http://homeassistant:8123"),
         "STATISTIC_ID": os.getenv("STAT_ID", "sensor.wiener_netze_energy"),
         "MQTT_HOST": os.getenv("MQTT_HOST", "core-mosquitto"),
+        "MQTT_PORT": int(os.environ.get("MQTT_PORT", 1883)),
         "MQTT_TOPIC": os.getenv("MQTT_TOPIC", "smartmeter/energy/state"),
         "MQTT_USERNAME": os.getenv("MQTT_USERNAME"),
         "MQTT_PASSWORD": os.getenv("MQTT_PASSWORD"),
         "HISTORY_DAYS": int(os.getenv("HISTORY_DAYS", "1")),
         "RETRY_COUNT": int(os.getenv("RETRY_COUNT", "3")),
-        "RETRY_DELAY": int(os.getenv("RETRY_DELAY", "10")),
+        "RETRY_DELAY": int(os.getenv("RETRY_DELAY", "5")),
+        "UPDATE_INTERVAL": int(os.environ.get("UPDATE_INTERVAL", 86400)),
         "SESSION_FILE": os.getenv("SESSION_FILE", "/data/wnsm_session.json")
     }
 

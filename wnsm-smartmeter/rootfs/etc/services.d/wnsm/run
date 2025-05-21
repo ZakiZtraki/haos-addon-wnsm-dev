@@ -6,7 +6,6 @@
 # Export configuration values
 export WNSM_USERNAME=$(bashio::config 'WNSM_USERNAME')
 export WNSM_PASSWORD=$(bashio::config 'WNSM_PASSWORD')
-export ZP=$(bashio::config 'ZP')
 export USE_EXTERNAL_MQTT=$(bashio::config 'USE_EXTERNAL_MQTT')
 
 # Only export these if external MQTT is enabled
@@ -22,10 +21,32 @@ if bashio::config.has_value 'MQTT_TOPIC'; then
     export MQTT_TOPIC=$(bashio::config 'MQTT_TOPIC')
 fi
 
+if bashio::config.has_value 'ZP'; then
+    export ZP=$(bashio::config 'ZP')
+fi
+
+if bashio::config.has_value 'STAT_ID'; then
+    export STAT_ID=$(bashio::config 'STAT_ID')
+fi
+
+# Export numeric configs properly
+if bashio::config.has_value 'HISTORY_DAYS'; then
+    export HISTORY_DAYS=$(bashio::config 'HISTORY_DAYS')
+fi
+
+if bashio::config.has_value 'RETRY_COUNT'; then
+    export RETRY_COUNT=$(bashio::config 'RETRY_COUNT')
+fi
+
+if bashio::config.has_value 'RETRY_DELAY'; then
+    export RETRY_DELAY=$(bashio::config 'RETRY_DELAY')
+fi
+
 if bashio::config.has_value 'UPDATE_INTERVAL'; then
     export UPDATE_INTERVAL=$(bashio::config 'UPDATE_INTERVAL')
 fi
 
+# Log the start of the service
 bashio::log.info "Starting Wiener Netze Smart Meter service..."
 
 # Run the application
