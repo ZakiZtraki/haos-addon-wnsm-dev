@@ -15,19 +15,7 @@
     "codenotary": "admins@zenmedia.live",
     "options": {
         "WNSM_USERNAME": "",
-        "WNSM_PASSWORD": "",
-        "HA_URL": "",
-        "STAT_ID": "",
-        "MQTT_USERNAME": "",
-        "MQTT_PASSWORD": "",
-        "MQTT_HOST": "",
-        "MQTT_PORT": "",
-        "HISTORY_DAYS": "",
-        "MQTT_TOPIC": "",
-        "RETRY_COUNT": "",
-        "RETRY_DELAY": "",
-        "UPDATE_INTERVAL": "",
-        "USE_EXTERNAL_MQTT": false
+        "WNSM_PASSWORD": ""
     },
     "schema": {
         "WNSM_USERNAME": "str",
