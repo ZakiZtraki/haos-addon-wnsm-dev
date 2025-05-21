@@ -327,8 +327,7 @@ def main():
         from api import constants as const
     except ImportError as e:
         logger.critical(f"Failed to import required modules: {e}")
-        sys.exit(1)
-    
+    sys.exit(1)
     # Initialize Smartmeter client
     client = Smartmeter(config["USERNAME"], config["PASSWORD"])
     
