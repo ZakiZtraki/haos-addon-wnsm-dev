@@ -60,4 +60,6 @@ htmlcov/
 secrets.yaml
 *.pem
 *.key
-*.crt
+
+#Do not track copy from the Add-on folder
+CHANGELOG.md

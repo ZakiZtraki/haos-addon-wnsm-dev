@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.4](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.3...v0.1.4) (2025-05-21)
+
+
+### Features
+
+* add fetch_bewegungsdaten function to retrieve energy consumption data from Wiener Netze API ([7f56d7d](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/commit/7f56d7df6cd2f3e08cf8e5f35a86e2dffded5fc9))
+* initialize __init__.py for wnsm_sync module ([1ce2a46](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/commit/1ce2a469995e366426fe7cf9b1df3123a152aa0b))
+
 ### [0.1.3](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.2...v0.1.3) (2025-05-21)
 
 ### [0.1.2](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.1...v0.1.2) (2025-05-21)
