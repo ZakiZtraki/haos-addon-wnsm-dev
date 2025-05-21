@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.6](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.5...v0.1.6) (2025-05-21)
+
+
+### Features
+
+* enhance MQTT configuration handling and add message publishing functions ([8c1e229](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/commit/8c1e229e5b53b82e0059d1459023ae10d650a9b6))
+
+### [0.1.5](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.4...v0.1.5) (2025-05-21)
+
 ### [0.1.4](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.3...v0.1.4) (2025-05-21)
 
 
