@@ -346,9 +346,43 @@ def main():
     
     logger.info("==== Wiener Netze Smart Meter Sync completed ====")
 
+def fetch_bewegungsdaten(config):
+    """
+    Fetch energy consumption data from Wiener Netze API.
+    
+    Args:
+        config (dict): Configuration dictionary with credentials and settings
+        
+    Returns:
+        list: List of statistics dictionaries containing energy data
+    """
+    # Import your client here to avoid circular imports
+    from wnsm_sync.api.client import Smartmeter
+    
+    try:
+        # Initialize the client
+        client = Smartmeter(
+            username=config["WNSM_USERNAME"],
+            password=config["WNSM_PASSWORD"]
+        )
+        
+        # Fetch the data
+        # Replace with your actual implementation
+        zp = config.get("ZP")
+        days = int(config.get("HISTORY_DAYS", 1))
+        
+        # Fetch data from API
+        statistics = client.get_bewegungsdaten(zp, days)
+        
+        return statistics
+    except Exception as e:
+        logger.error(f"Error fetching Bewegungsdaten: {e}")
+        return []
+
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
         logger.critical(f"Unexpected error: {e}", exc_info=True)
         sys.exit(1)
+
