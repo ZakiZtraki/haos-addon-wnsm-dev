@@ -152,34 +152,93 @@ def publish_mqtt_discovery(config):
     except Exception as e:
         logger.error(f"Failed to publish MQTT discovery: {e}")
 
+
+def publish_mqtt_message(topic, payload, config):
+    """Publish a message to MQTT with appropriate configuration."""
+    try:
+        use_external_mqtt = config.get("USE_EXTERNAL_MQTT", False)
+
+        if not use_external_mqtt:
+            # Use Home Assistant's MQTT service via bashio
+            import subprocess
+
+            cmd = [
+                "bashio", "services", "mqtt", "publish",
+                "--topic", topic,
+                "--retain"
+            ]
+
+            # Convert payload to JSON string
+            json_payload = json.dumps(payload)
+            cmd.extend(["--payload", json_payload])
+
+            # Execute the command
+            process = subprocess.run(cmd, capture_output=True, text=True)
+
+            if process.returncode != 0:
+                logger.error(f"Failed to publish via bashio: {process.stderr}")
+                return False
+        else:
+            # Use direct MQTT connection for external brokers
+            import paho.mqtt.publish as publish
+
+            # Extract host and port
+            mqtt_host = config.get("MQTT_HOST", "localhost")
+            mqtt_port = int(config.get("MQTT_PORT", 1883))
+
+            # Prepare auth if credentials provided
+            auth = None
+            if config.get("MQTT_USERNAME") or config.get("MQTT_PASSWORD"):
+                auth = {
+                    "username": config.get("MQTT_USERNAME", ""),
+                    "password": config.get("MQTT_PASSWORD", "")
+                }
+
+            publish.single(
+                topic=topic,
+                payload=json.dumps(payload),
+                hostname=mqtt_host,
+                port=mqtt_port,
+                auth=auth,
+                retain=True
+            )
+        return True
+    except Exception as e:
+
+        logger.error(f"Failed to publish to {topic}: {e}", exc_info=True)
+        return False
+
 def publish_mqtt_data(statistics, config):
     """Publish energy data to MQTT."""
     if not statistics:
         logger.warning("No statistics to publish")
         return
-    
+
     logger.info(f"Publishing {len(statistics)} entries to MQTT")
-    
+
     for s in statistics:
         topic = f"{config['MQTT_TOPIC']}/{s['start'][:16]}"  # e.g. smartmeter/energy/state/2025-05-16T00:15
         payload = {
             "value": s["sum"],
             "timestamp": s["start"]
         }
-        
-        try:
-            publish.single(
-                topic=topic,
-                payload=json.dumps(payload),
-                hostname=config["MQTT_HOST"],
-                auth={
-                    "username": config["MQTT_USERNAME"],
-                    "password": config["MQTT_PASSWORD"]
-                },
-                retain=True
-            )
-        except Exception as e:
-            logger.error(f"Failed to publish to {topic}: {e}")
+
+        publish_mqtt_message(topic, payload, config)
+
+    # Publish latest value to main topic for current state
+    try:
+        latest = statistics[-1]
+        publish_mqtt_message(
+            config["MQTT_TOPIC"],
+            {
+                "value": latest["sum"],
+                "timestamp": latest["start"]
+            },
+            config
+        )
+        logger.info("✅ All entries published to MQTT")
+    except Exception as e:
+        logger.error(f"Failed to publish latest value: {e}")
     
     # Publish latest value to main topic for current state
     try:
@@ -288,4 +347,3 @@ if __name__ == "__main__":
     except Exception as e:
         logger.critical(f"Unexpected error: {e}", exc_info=True)
         sys.exit(1)
-
