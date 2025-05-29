@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.25](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.24...v0.1.25) (2025-05-29)
+
+
+### Features
+
+* **api:** enhance data fetching and processing logic for statistics ([5b7f814](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/commit/5b7f8141cce8a92adb448c1cf9d513c75f32ae84))
+
 ### [0.1.24](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.23...v0.1.24) (2025-05-29)
 
 
