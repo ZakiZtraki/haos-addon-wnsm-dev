@@ -276,7 +276,8 @@ class Smartmeter:
                 token_data = {
                     "grant_type": "client_credentials",
                     "client_id": const.OAUTH_CLIENT_ID,
-                    "client_secret": const.OAUTH_CLIENT_SECRET
+                    "client_secret": const.OAUTH_CLIENT_SECRET,
+                    "scope": const.OAUTH_SCOPE  # Use the constant for the scope
                 }
                 
                 # Make the token request
