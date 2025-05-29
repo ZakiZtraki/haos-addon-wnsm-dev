@@ -37,7 +37,7 @@
         "MQTT_PASSWORD": "password?",
         "MQTT_TOPIC": "str?",
         "UPDATE_INTERVAL": "int(3600,)?",
-        "HISTORY_DAYS": "int(1,90)?",
+        "HISTORY_DAYS": "int(1,1095)?",
         "RETRY_COUNT": "int(1,10)?",
         "RETRY_DELAY": "int(1,60)?",
         "DEBUG": "bool?",
