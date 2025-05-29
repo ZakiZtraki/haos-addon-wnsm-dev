@@ -1,6 +1,7 @@
 """Contains the Smartmeter API Client."""
 import json
 import logging
+import os
 from datetime import datetime, timedelta, date
 from urllib import parse
 from typing import List, Dict, Any, Tuple, Optional
@@ -22,16 +23,18 @@ logger = logging.getLogger(__name__)
 class Smartmeter:
     """Smartmeter client for accessing the API."""
 
-    def __init__(self, username: str, password: str):
+    def __init__(self, username: str, password: str, use_mock: bool = False):
         """Initialize the Smartmeter API client.
 
         Args:
             username (str): Username used for API login.
             password (str): Password used for API login.
+            use_mock (bool, optional): Use mock data instead of real API calls. Defaults to False.
         """
         self.username = username
         self.password = password
         self.session = requests.Session()
+        self._use_mock = use_mock
         self._access_token = None
         self._refresh_token = None
         self._api_gateway_token = None
@@ -446,10 +449,15 @@ class Smartmeter:
         logger.info(f"API call to {endpoint} (base: {base_url})")
         
         # Check if we should use mock data
-        use_mock = True
+        # This can be controlled via configuration
+        use_mock = getattr(self, '_use_mock', False)
+        
+        # If we're in development mode or testing, use mock data
+        if os.environ.get('WNSM_USE_MOCK_DATA', '').lower() in ('true', '1', 'yes'):
+            use_mock = True
         
         if use_mock:
-            logger.info("Using mock data for API calls")
+            logger.info("MOCK DATA MODE: Using simulated data instead of calling the real API")
             
             # For bewegungsdaten endpoint
             if "bewegungsdaten" in endpoint or endpoint == "user/messwerte/bewegungsdaten":

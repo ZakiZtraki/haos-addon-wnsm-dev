@@ -39,6 +39,7 @@
         "RETRY_COUNT": "int(1,10)?",
         "RETRY_DELAY": "int(1,60)?",
         "DEBUG": "bool?",
+        "USE_MOCK_DATA": "bool?",
         "HA_URL": "str?",
         "STAT_ID": "str?"
     },

@@ -434,10 +434,14 @@ def fetch_bewegungsdaten(config):
     from wnsm_sync.api.client import Smartmeter
     
     try:
+        # Check if we should use mock data
+        use_mock = config.get("USE_MOCK_DATA", False)
+        
         # Initialize the client
         client = Smartmeter(
             username=config.get("WNSM_USERNAME", config.get("USERNAME")),
-            password=config.get("WNSM_PASSWORD", config.get("PASSWORD"))
+            password=config.get("WNSM_PASSWORD", config.get("PASSWORD")),
+            use_mock=use_mock
         )
         
         # Login to the service

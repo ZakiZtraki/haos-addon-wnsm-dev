@@ -67,7 +67,8 @@ def load_config():
         "MQTT_PASSWORD": ["MQTT_PASSWORD"],
         "MQTT_TOPIC": ["MQTT_TOPIC"],
         "UPDATE_INTERVAL": ["UPDATE_INTERVAL"],
-        "DEBUG": ["DEBUG"]
+        "DEBUG": ["DEBUG"],
+        "USE_MOCK_DATA": ["WNSM_USE_MOCK_DATA", "USE_MOCK_DATA"]
     }
     
     # For each config key, try all possible environment variable names
@@ -90,7 +91,8 @@ def load_config():
     defaults = {
         "MQTT_PORT": 1883,
         "MQTT_TOPIC": "smartmeter/energy/state",
-        "UPDATE_INTERVAL": 3600
+        "UPDATE_INTERVAL": 3600,
+        "USE_MOCK_DATA": False  # Default to using real API data
     }
     
     for key, default_value in defaults.items():
@@ -118,6 +120,10 @@ def main():
             sys.exit(1)
 
         logger.info("Wiener Netze Smart Meter Add-on started")
+        
+        # Log whether we're using mock data
+        if config.get("USE_MOCK_DATA"):
+            logger.warning("MOCK DATA MODE ENABLED - Using simulated data instead of real API calls")
 
         while True:
             logger.info("Publishing MQTT discovery configuration")
