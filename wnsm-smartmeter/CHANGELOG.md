@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file. See [standa
 ### [0.2.2](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.1...v0.2.2) (2025-05-29)
 
 
+### Features
+
+* enhance error handling and logging for bewegungsdaten method in Smartmeter class ([c85dfb8](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/commit/c85dfb8a625800d53eb2eb36abfc5134681f7672))
+
+### [0.2.2](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.1...v0.2.2) (2025-05-29)
+
+
 ### Bug Fixes
 
 * Fix parameter name issue in bewegungsdaten method call
