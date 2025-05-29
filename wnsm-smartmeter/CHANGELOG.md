@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.6](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.5...v0.2.6) (2025-05-29)
+
+
+### Features
+
+* extend HISTORY_DAYS option to support up to 1095 days ([bb0e75e](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/commit/bb0e75e6defe26decf89155d78799190a6d93d22))
+
 ### [0.2.5](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.4...v0.2.5) (2025-05-29)
 
 
