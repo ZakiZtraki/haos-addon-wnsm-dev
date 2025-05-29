@@ -30,6 +30,7 @@ def load_config():
         # Required parameters from user
         "USERNAME": os.getenv("WNSM_USERNAME"),
         "PASSWORD": os.getenv("WNSM_PASSWORD"),
+        "ZP": os.getenv("WNSM_ZP"),
         "USE_EXTERNAL_MQTT": os.getenv("USE_EXTERNAL_MQTT"),
         # Optional parameters with defaults
         "HA_URL": os.getenv("HA_URL", "http://homeassistant:8123"),
@@ -53,8 +54,11 @@ def load_config():
         try:
             with open("/data/options.json") as f:
                 opts = json.load(f)
-                logger.warning("options.json not found, using environment variables")
-                opts = {}
+        except FileNotFoundError:
+            logger.warning("options.json not found, using environment variables")
+            opts = {}
+        
+        try:
             # Map options to config with our specific prefix
             config.update({
                 "USERNAME": opts.get("WNSM_USERNAME", config["USERNAME"]),
@@ -74,11 +78,11 @@ def load_config():
             logger.error(f"Error loading options.json: {e}")
     
     # Ensure we have the critical values
-    # for key in required_keys:
-    #     if not config.get(key):
-    #         logger.error(f"Missing required configuration: {key}")
-    #     sys.exit(1)
-    # return config
+    for key in required_keys:
+        if not config.get(key):
+            logger.error(f"Missing required configuration: {key}")
+            sys.exit(1)
+    return config
 
 def with_retry(func, config, *args, **kwargs):
     """Execute function with retry logic."""
@@ -146,60 +150,31 @@ def parse_mqtt_host(mqtt_host):
     
     return mqtt_host, 1883
 
-def publish_mqtt_message(topic, payload, config):
-    """Publish a message to MQTT with consistent host/port handling."""
-    try:
-        host, port = parse_mqtt_host(config.get("MQTT_HOST", ""))
-        
-        auth = None
-        if config.get("MQTT_USERNAME") or config.get("MQTT_PASSWORD"):
-            auth = {
-                "username": config.get("MQTT_USERNAME", ""),
-                "password": config.get("MQTT_PASSWORD", "")
-            }
-        
-        publish.single(
-            topic=topic,
-            payload=json.dumps(payload),
-            hostname=host,
-            port=port,
-            auth=auth,
-            retain=True
-        )
-        return True
-    except Exception as e:
-        logger.error(f"Failed to publish to {topic}: {e}")
-        return False
+# Function moved to a more comprehensive implementation below
 
 def publish_mqtt_discovery(config):
     """Publish MQTT discovery configuration for Home Assistant."""
     try:
         device_id = config["ZP"].lower().replace("0", "")
-        publish.single(
-            topic=f"homeassistant/sensor/wnsm_sync_{device_id}/config",
-            payload=json.dumps({
-                "name": "Wiener Netze Smartmeter Sync",
-                "state_topic": config["MQTT_TOPIC"],
-                "unit_of_measurement": "kWh",
-                "device_class": "energy",
-                "state_class": "total_increasing",
-                "unique_id": f"wnsm_sync_energy_sensor_{device_id}",
-                "value_template": "{{ value_json.value }}",
-                "timestamp_template": "{{ value_json.timestamp }}",
-                "device": {
-                    "identifiers": [f"wnsm_sync_{device_id}"],
-                    "name": "Wiener Netze Smart Meter",
-                    "manufacturer": "Wiener Netze",
-                    "model": "Smart Meter"
-                }
-            }),
-            hostname=config["MQTT_HOST"],
-            auth={
-                "username": config["MQTT_USERNAME"],
-                "password": config["MQTT_PASSWORD"]
-            },
-            retain=True
-        )
+        discovery_topic = f"homeassistant/sensor/wnsm_sync_{device_id}/config"
+        discovery_payload = {
+            "name": "Wiener Netze Smartmeter Sync",
+            "state_topic": config["MQTT_TOPIC"],
+            "unit_of_measurement": "kWh",
+            "device_class": "energy",
+            "state_class": "total_increasing",
+            "unique_id": f"wnsm_sync_energy_sensor_{device_id}",
+            "value_template": "{{ value_json.value }}",
+            "timestamp_template": "{{ value_json.timestamp }}",
+            "device": {
+                "identifiers": [f"wnsm_sync_{device_id}"],
+                "name": "Wiener Netze Smart Meter",
+                "manufacturer": "Wiener Netze",
+                "model": "Smart Meter"
+            }
+        }
+        
+        publish_mqtt_message(discovery_topic, discovery_payload, config)
         logger.info("MQTT discovery configuration published")
     except Exception as e:
         logger.error(f"Failed to publish MQTT discovery: {e}")
@@ -291,26 +266,6 @@ def publish_mqtt_data(statistics, config):
         logger.info("✅ All entries published to MQTT")
     except Exception as e:
         logger.error(f"Failed to publish latest value: {e}")
-    
-    # Publish latest value to main topic for current state
-    try:
-        latest = statistics[-1]
-        publish.single(
-            topic=config["MQTT_TOPIC"],
-            payload=json.dumps({
-                "value": latest["sum"],
-                "timestamp": latest["start"]
-            }),
-            hostname=config["MQTT_HOST"],
-            auth={
-                "username": config["MQTT_USERNAME"],
-                "password": config["MQTT_PASSWORD"]
-            },
-            retain=True
-        )
-        logger.info("✅ All entries published to MQTT")
-    except Exception as e:
-        logger.error(f"Failed to publish latest value: {e}")
 
 def main():
     """Main function to run the sync process."""
@@ -326,7 +281,7 @@ def main():
         from api import constants as const
     except ImportError as e:
         logger.critical(f"Failed to import required modules: {e}")
-    sys.exit(1)
+        sys.exit(1)
     # Initialize Smartmeter client
     client = Smartmeter(config["USERNAME"], config["PASSWORD"])
     
