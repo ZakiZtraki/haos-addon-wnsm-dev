@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.1](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.27...v0.2.1) (2025-05-29)
+
+
+### Features
+
+* update Wiener Netze Smartmeter add-on to use vienna-smartmeter library with PKCE authentication ([a8f2fad](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/commit/a8f2fadddf873c4762872695a29c685970b3daf1))
+
 ## [0.2.0](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.27...v0.2.0) (2025-05-30)
 
 
