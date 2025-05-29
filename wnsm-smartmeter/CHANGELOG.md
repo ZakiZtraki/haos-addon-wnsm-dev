@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.24](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.23...v0.1.24) (2025-05-29)
+
+
+### Features
+
+* **api:** add OAUTH_SCOPE constant and include it in token request parameters ([a9c5c34](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/commit/a9c5c342fa7fd5f7d82ec9b13f0b3f89d62bb814))
+
 ### [0.1.23](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.22...v0.1.23) (2025-05-29)
 
 
