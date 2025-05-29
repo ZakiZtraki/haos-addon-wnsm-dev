@@ -286,7 +286,7 @@ def publish_mqtt_data(statistics, config):
     if isinstance(statistics, dict):
         logger.info(f"Fetched data in unexpected format: {type(statistics)}")
         # Try to process it using our processor function
-        statistics = process_bewegungsdaten_response(statistics)
+        statistics = process_bewegungsdaten_response(statistics, config)
 
     logger.info(f"Publishing {len(statistics)} entries to MQTT")
 
@@ -460,10 +460,16 @@ def fetch_bewegungsdaten(config):
         days = int(config.get("HISTORY_DAYS", 1))
         
         # Fetch data from API
-        from datetime import date, timedelta
-        date_until = date.today()
-        date_from = date_until - timedelta(days=days)
-        logger.info(f"Fetching data from {date_from} to {date_until}")
+        from datetime import date, timedelta, datetime
+        
+        # Use yesterday as the end date since data is only available until the previous day
+        date_until = date.today() - timedelta(days=1)
+        logger.info(f"Using yesterday ({date_until}) as end date since data is only available until the previous day")
+        
+        # Calculate start date based on history_days
+        date_from = date_until - timedelta(days=days-1)  # -1 because we want to include the end date
+        
+        logger.info(f"Fetching data from {date_from} to {date_until} ({days} days)")
         
         # Get zaehlpunkte if ZP is not provided
         if not zp:
@@ -493,7 +499,7 @@ def fetch_bewegungsdaten(config):
                 logger.debug(f"Raw data keys: {raw_data.keys()}")
                 
             # Process the data into the expected format
-            statistics = process_bewegungsdaten_response(raw_data)
+            statistics = process_bewegungsdaten_response(raw_data, config)
             
         except TypeError as e:
             if "unexpected keyword argument" in str(e):
@@ -506,7 +512,7 @@ def fetch_bewegungsdaten(config):
                 )
                 
                 # Process the data into the expected format
-                statistics = process_bewegungsdaten_response(raw_data)
+                statistics = process_bewegungsdaten_response(raw_data, config)
             else:
                 raise
         
@@ -582,16 +588,20 @@ def fetch_bewegungsdaten(config):
         
         return []
 
-def process_bewegungsdaten_response(raw_data):
+def process_bewegungsdaten_response(raw_data, config=None):
     """
     Process the response from the bewegungsdaten method into a standardized format.
     
     Args:
         raw_data: The raw data returned by the bewegungsdaten method
+        config: Configuration dictionary, used for fallback options
         
     Returns:
         list: A list of dictionaries with standardized format
     """
+    # Default config if none provided
+    if config is None:
+        config = {}
     logger.debug(f"Processing bewegungsdaten response of type: {type(raw_data)}")
     
     # Initialize an empty list for the processed data
@@ -619,6 +629,22 @@ def process_bewegungsdaten_response(raw_data):
                 
                 # Extract values and convert to the expected format
                 values = raw_data.get('values', [])
+                
+                # Log the values for debugging
+                logger.debug(f"Values type: {type(values)}")
+                logger.debug(f"Values content: {values}")
+                
+                if not values:
+                    logger.warning("No values found in the response")
+                    # Check if there's a message in the descriptor
+                    descriptor = raw_data.get('descriptor', {})
+                    if isinstance(descriptor, dict):
+                        logger.debug(f"Descriptor: {descriptor}")
+                        if 'message' in descriptor:
+                            logger.warning(f"Message from API: {descriptor['message']}")
+                        if 'zeitpunktVon' in descriptor and 'zeitpunktBis' in descriptor:
+                            logger.info(f"API data period: {descriptor['zeitpunktVon']} to {descriptor['zeitpunktBis']}")
+                
                 if isinstance(values, list):
                     running_sum = 0
                     for value in values:
@@ -630,6 +656,8 @@ def process_bewegungsdaten_response(raw_data):
                                 "sum": running_sum,
                                 "state": value_float
                             })
+                        else:
+                            logger.warning(f"Skipping invalid value item: {value}")
             
             # Format 3: Dictionary with other structure
             else:
@@ -702,6 +730,25 @@ def process_bewegungsdaten_response(raw_data):
                         })
         
         logger.info(f"Processed {len(processed_data)} data points")
+        
+        # If no data was processed but we have a raw_data object, log more details
+        if not processed_data and raw_data:
+            logger.warning("No data points were processed from the API response")
+            if isinstance(raw_data, dict):
+                logger.debug(f"Raw data keys: {raw_data.keys()}")
+                # Check for error messages or status information
+                for key in ['error', 'message', 'status', 'descriptor']:
+                    if key in raw_data:
+                        logger.warning(f"{key}: {raw_data[key]}")
+            
+            # If USE_MOCK_DATA is enabled in config, generate mock data
+            if config.get("USE_MOCK_DATA", False):
+                logger.info("USE_MOCK_DATA is enabled, generating mock data as fallback")
+                from datetime import date, timedelta
+                today = date.today()
+                yesterday = today - timedelta(days=1)
+                return _generate_mock_data(yesterday - timedelta(days=6), yesterday)
+        
         return processed_data
     
     except Exception as e:

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.4](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.3...v0.2.4) (2025-05-29)
+
+
+### Bug Fixes
+
+* Fix date range handling to use previous day as end date
+* Improve error handling for empty API responses
+* Add fallback to mock data when no real data is available
+* Enhance logging for better troubleshooting
+
 ### [0.2.3](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.2...v0.2.3) (2025-05-29)
 
 
