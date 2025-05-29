@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file. See [standa
 ### [0.2.4](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.3...v0.2.4) (2025-05-29)
 
 
+### Features
+
+* update bewegungsdaten processing to improve date handling and error logging ([b2cb370](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/commit/b2cb370ac32b8b0ba9ccdb8f298b0d7447e25116))
+
+### [0.2.4](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.3...v0.2.4) (2025-05-29)
+
+
 ### Bug Fixes
 
 * Fix date range handling to use previous day as end date
