@@ -29,76 +29,122 @@ if log_level == logging.DEBUG:
     logger.debug("Debug logging enabled")
 
 # === CONFIGURATION ===
-# Configuration from environment variables with fallbacks to options.json
+# Configuration from options.json with fallbacks to environment variables
 def load_config():
-    """Load configuration from environment or options.json file."""
-    config = {
-        # Required parameters from user
-        "USERNAME": os.getenv("WNSM_USERNAME") or os.getenv("USERNAME"),
-        "PASSWORD": os.getenv("WNSM_PASSWORD") or os.getenv("PASSWORD"),
-        "ZP": os.getenv("WNSM_ZP") or os.getenv("ZP"),
-        "USE_EXTERNAL_MQTT": os.getenv("USE_EXTERNAL_MQTT"),
-        # Optional parameters with defaults
-        "HA_URL": os.getenv("HA_URL", "http://homeassistant:8123"),
-        "STATISTIC_ID": os.getenv("STAT_ID", "sensor.wiener_netze_energy"),
-        "MQTT_HOST": os.getenv("MQTT_HOST", "core-mosquitto"),
-        "MQTT_PORT": int(os.environ.get("MQTT_PORT", 1883)),
-        "MQTT_TOPIC": os.getenv("MQTT_TOPIC", "smartmeter/energy/state"),
-        "MQTT_USERNAME": os.getenv("MQTT_USERNAME"),
-        "MQTT_PASSWORD": os.getenv("MQTT_PASSWORD"),
-        "HISTORY_DAYS": int(os.getenv("HISTORY_DAYS", "1")),
-        "RETRY_COUNT": int(os.getenv("RETRY_COUNT", "3")),
-        "RETRY_DELAY": int(os.getenv("RETRY_DELAY", "5")),
-        "UPDATE_INTERVAL": int(os.environ.get("UPDATE_INTERVAL", 86400)),
-        "SESSION_FILE": os.getenv("SESSION_FILE", "/data/wnsm_session.json")
-    }
-
+    """Load configuration from options.json or environment variables."""
+    config = {}
+    
+    # First try to load from options.json (preferred method for Home Assistant addons)
+    options_file = "/data/options.json"
+    if os.path.exists(options_file):
+        try:
+            logger.info(f"Loading configuration from {options_file}")
+            with open(options_file, 'r') as f:
+                options = json.loads(f.read())
+                logger.debug(f"Loaded options: {', '.join(options.keys())}")
+                
+                # Map options.json keys to our config keys
+                key_mapping = {
+                    "WNSM_USERNAME": "USERNAME",
+                    "WNSM_PASSWORD": "PASSWORD",
+                    "ZP": "ZP",
+                    "MQTT_HOST": "MQTT_HOST",
+                    "MQTT_PORT": "MQTT_PORT",
+                    "MQTT_USERNAME": "MQTT_USERNAME",
+                    "MQTT_PASSWORD": "MQTT_PASSWORD",
+                    "MQTT_TOPIC": "MQTT_TOPIC",
+                    "UPDATE_INTERVAL": "UPDATE_INTERVAL",
+                    "HISTORY_DAYS": "HISTORY_DAYS",
+                    "RETRY_COUNT": "RETRY_COUNT",
+                    "RETRY_DELAY": "RETRY_DELAY",
+                    "HA_URL": "HA_URL",
+                    "STAT_ID": "STATISTIC_ID",
+                    "DEBUG": "DEBUG"
+                }
+                
+                # Transfer all options to our config using the mapping
+                for options_key, config_key in key_mapping.items():
+                    if options_key in options and options[options_key] is not None:
+                        config[config_key] = options[options_key]
+                        logger.debug(f"Using {options_key} from options.json for {config_key}")
+                
+        except Exception as e:
+            logger.error(f"Failed to load options.json: {e}")
+    else:
+        logger.warning(f"Options file {options_file} not found, falling back to environment variables")
+    
     # Debug: Print all environment variables to help diagnose issues
     logger.debug("Environment variables:")
     for key, value in os.environ.items():
         logger.debug(f"  {key}: {value if 'PASSWORD' not in key else '****'}")
     
-    # Debug: Print current config values
-    logger.debug("Current config values:")
+    # Fall back to environment variables for any missing values
+    env_mappings = {
+        "USERNAME": ["WNSM_USERNAME", "USERNAME"],
+        "PASSWORD": ["WNSM_PASSWORD", "PASSWORD"],
+        "ZP": ["WNSM_ZP", "ZP"],
+        "USE_EXTERNAL_MQTT": ["USE_EXTERNAL_MQTT"],
+        "HA_URL": ["HA_URL"],
+        "STATISTIC_ID": ["STAT_ID", "STATISTIC_ID"],
+        "MQTT_HOST": ["MQTT_HOST"],
+        "MQTT_PORT": ["MQTT_PORT"],
+        "MQTT_TOPIC": ["MQTT_TOPIC"],
+        "MQTT_USERNAME": ["MQTT_USERNAME"],
+        "MQTT_PASSWORD": ["MQTT_PASSWORD"],
+        "HISTORY_DAYS": ["HISTORY_DAYS"],
+        "RETRY_COUNT": ["RETRY_COUNT"],
+        "RETRY_DELAY": ["RETRY_DELAY"],
+        "UPDATE_INTERVAL": ["UPDATE_INTERVAL"],
+        "SESSION_FILE": ["SESSION_FILE"]
+    }
+    
+    # For each config key, try all possible environment variable names
+    for config_key, env_vars in env_mappings.items():
+        if config_key not in config or config[config_key] is None:
+            for env_var in env_vars:
+                if env_var in os.environ and os.environ[env_var]:
+                    value = os.environ[env_var]
+                    # Convert numeric values
+                    if config_key in ["MQTT_PORT", "UPDATE_INTERVAL", "HISTORY_DAYS", "RETRY_COUNT", "RETRY_DELAY"]:
+                        try:
+                            value = int(value)
+                        except ValueError:
+                            logger.warning(f"Could not convert {env_var}='{value}' to integer")
+                    config[config_key] = value
+                    logger.debug(f"Using environment variable {env_var} for {config_key}")
+                    break
+    
+    # Set defaults for optional parameters
+    defaults = {
+        "HA_URL": "http://homeassistant:8123",
+        "STATISTIC_ID": "sensor.wiener_netze_energy",
+        "MQTT_HOST": "core-mosquitto",
+        "MQTT_PORT": 1883,
+        "MQTT_TOPIC": "smartmeter/energy/state",
+        "HISTORY_DAYS": 1,
+        "RETRY_COUNT": 3,
+        "RETRY_DELAY": 5,
+        "UPDATE_INTERVAL": 86400,
+        "SESSION_FILE": "/data/wnsm_session.json"
+    }
+    
+    for key, default_value in defaults.items():
+        if key not in config or config[key] is None:
+            config[key] = default_value
+            logger.debug(f"Using default value for {key}: {default_value}")
+    
+    # Debug: Print final config
+    logger.debug("Final configuration:")
     for key, value in config.items():
         logger.debug(f"  {key}: {value if 'PASSWORD' not in key else '****'}")
     
-    # If any required values are missing, fall back to options.json
+    # Ensure we have the critical values
     required_keys = ["USERNAME", "PASSWORD", "ZP"]
     missing_keys = [key for key in required_keys if not config.get(key)]
     if missing_keys:
-        logger.info(f"Some required configuration missing: {', '.join(missing_keys)} - loading from options.json")
-        try:
-            with open("/data/options.json") as f:
-                opts = json.load(f)
-        except FileNotFoundError:
-            logger.warning("options.json not found, using environment variables")
-            opts = {}
+        logger.error(f"Missing required configuration: {', '.join(missing_keys)}")
+        sys.exit(1)
         
-        try:
-            # Map options to config with our specific prefix
-            config.update({
-                "USERNAME": opts.get("WNSM_USERNAME", config["USERNAME"]),
-                "PASSWORD": opts.get("WNSM_PASSWORD", config["PASSWORD"]),
-                "GP": opts.get("WNSM_GP", config["GP"]),
-                "ZP": opts.get("WNSM_ZP", config["ZP"]),
-                "HA_URL": opts.get("HA_URL", config["HA_URL"]),
-                "STATISTIC_ID": opts.get("STAT_ID", config["STATISTIC_ID"]),
-                "MQTT_USERNAME": opts.get("MQTT_USERNAME", config["MQTT_USERNAME"]),
-                "MQTT_PASSWORD": opts.get("MQTT_PASSWORD", config["MQTT_PASSWORD"]),
-                "MQTT_HOST": opts.get("MQTT_HOST", config["MQTT_HOST"]),
-                "HISTORY_DAYS": int(opts.get("HISTORY_DAYS", config["HISTORY_DAYS"])),
-                "RETRY_COUNT": int(opts.get("RETRY_COUNT", config["RETRY_COUNT"])),
-                "RETRY_DELAY": int(opts.get("RETRY_DELAY", config["RETRY_DELAY"]))
-            })
-        except Exception as e:
-            logger.error(f"Error loading options.json: {e}")
-    
-    # Ensure we have the critical values
-    for key in required_keys:
-        if not config.get(key):
-            logger.error(f"Missing required configuration: {key}")
-            sys.exit(1)
     return config
 
 def with_retry(func, config, *args, **kwargs):
@@ -380,12 +426,11 @@ def fetch_bewegungsdaten(config):
     try:
         # Initialize the client
         client = Smartmeter(
-            username=config["WNSM_USERNAME"],
-            password=config["WNSM_PASSWORD"]
+            username=config["USERNAME"],
+            password=config["PASSWORD"]
         )
         
         # Fetch the data
-        # Replace with your actual implementation
         zp = config.get("ZP")
         days = int(config.get("HISTORY_DAYS", 1))
         
