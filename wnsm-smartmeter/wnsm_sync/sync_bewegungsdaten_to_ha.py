@@ -430,23 +430,22 @@ def fetch_bewegungsdaten(config):
     Returns:
         list: List of statistics dictionaries containing energy data
     """
-    # Import your client here to avoid circular imports
-    from wnsm_sync.api.client import Smartmeter
+    # Import the vienna-smartmeter library
+    from vienna_smartmeter import Smartmeter
     
     try:
         # Check if we should use mock data
         use_mock = config.get("USE_MOCK_DATA", False)
         
         # Initialize the client
+        logger.info("Initializing Wiener Netze Smartmeter client")
         client = Smartmeter(
             username=config.get("WNSM_USERNAME", config.get("USERNAME")),
-            password=config.get("WNSM_PASSWORD", config.get("PASSWORD")),
-            use_mock=use_mock
+            password=config.get("WNSM_PASSWORD", config.get("PASSWORD"))
         )
         
         # Login to the service
         logger.info("Logging in to Wiener Netze service")
-        client.login()
         
         # Fetch the data
         zp = config.get("ZP")
@@ -457,12 +456,73 @@ def fetch_bewegungsdaten(config):
         date_until = date.today()
         date_from = date_until - timedelta(days=days)
         logger.info(f"Fetching data from {date_from} to {date_until}")
-        statistics = client.bewegungsdaten(zp, date_from=date_from, date_until=date_until)
+        
+        # Get zaehlpunkte if ZP is not provided
+        if not zp:
+            logger.info("No ZP provided, fetching zaehlpunkte")
+            zaehlpunkte = client.zaehlpunkte()
+            if zaehlpunkte and len(zaehlpunkte) > 0:
+                # Get the first zaehlpunkt
+                zp = zaehlpunkte[0]["zaehlpunkte"][0]["zaehlpunktnummer"]
+                logger.info(f"Using zaehlpunkt: {zp}")
+            else:
+                logger.error("No zaehlpunkte found")
+                return []
+        
+        # Use the bewegungsdaten method to fetch data
+        logger.info(f"Fetching bewegungsdaten for zaehlpunkt {zp}")
+        statistics = client.bewegungsdaten(
+            zaehlpunktnummer=zp,
+            date_from=date_from,
+            date_until=date_until
+        )
         
         return statistics
     except Exception as e:
         logger.error(f"Error fetching Bewegungsdaten: {e}")
+        logger.exception(e)  # Log the full exception traceback
+        
+        # If mock data is enabled, return mock data
+        if config.get("USE_MOCK_DATA", False):
+            logger.info("Using mock data as fallback")
+            return _generate_mock_data(date_from, date_until)
+        
         return []
+
+def _generate_mock_data(date_from, date_until):
+    """Generate mock data for testing purposes."""
+    from datetime import datetime, timedelta
+    
+    # Create a simple mock response with some data
+    mock_data = {
+        "descriptor": {
+            "zaehlpunktnummer": "mock_zaehlpunkt",
+            "rolle": "mock_rolle",
+            "zeitpunktVon": date_from.strftime("%Y-%m-%dT00:00:00.000Z"),
+            "zeitpunktBis": date_until.strftime("%Y-%m-%dT23:59:59.999Z")
+        },
+        "data": []
+    }
+    
+    # Generate data points every 15 minutes
+    current_date = datetime.combine(date_from, datetime.min.time())
+    end_date = datetime.combine(date_until, datetime.max.time())
+    
+    while current_date <= end_date:
+        # Generate a random value between 0.1 and 1.0
+        import random
+        value = round(random.uniform(0.1, 1.0), 3)
+        
+        mock_data["data"].append({
+            "timestamp": current_date.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+            "value": value
+        })
+        
+        # Increment by 15 minutes
+        current_date += timedelta(minutes=15)
+    
+    logger.info(f"Generated {len(mock_data['data'])} mock data points")
+    return mock_data
 
 if __name__ == "__main__":
     try:

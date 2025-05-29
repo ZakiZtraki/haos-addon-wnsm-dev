@@ -20,13 +20,22 @@ if log_level == logging.DEBUG:
     logger.debug("Debug logging enabled")
 
 try:
+    # Import required modules
     from wnsm_sync.sync_bewegungsdaten_to_ha import (
         fetch_bewegungsdaten,
         publish_mqtt_discovery,
         publish_mqtt_data
     )
+    
+    # Try importing vienna-smartmeter to verify it's installed
+    import vienna_smartmeter
+    try:
+        logger.info(f"Using vienna-smartmeter version: {vienna_smartmeter.__version__}")
+    except AttributeError:
+        logger.info("Using vienna-smartmeter from GitHub (version info not available)")
 except ImportError as e:
     logger.error(f"Failed to import required modules: {e}")
+    logger.error("Make sure vienna-smartmeter is installed. Run: pip install git+https://github.com/cretl/vienna-smartmeter.git@fix-login-add-pkce")
     sys.exit(1)
 
 def load_config():

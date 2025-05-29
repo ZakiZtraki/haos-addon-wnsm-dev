@@ -1,13 +1,14 @@
 # Wiener Netze Smartmeter Sync Add-on for Home Assistant
 
-This Home Assistant add-on fetches 15-minute interval consumption data from the Wiener Netze Smart Meter portal and injects it into Home Assistant's long-term statistics.
+This Home Assistant add-on fetches 15-minute interval consumption data from the Wiener Netze Smart Meter portal and publishes it to Home Assistant via MQTT.
 
 ## Features
-- Authenticates with Wiener Netze login
+- Authenticates with Wiener Netze login using PKCE (Proof Key for Code Exchange)
 - Retrieves Bewegungsdaten (quarter-hourly history)
-- Automatically pushes to HA statistics via REST API
-- Integrates with Energy Dashboard and cost sensors
-- Can be scheduled to run daily at 04:00 via automation
+- Publishes data to Home Assistant via MQTT
+- Automatically creates sensors through MQTT discovery
+- Supports the latest Wiener Netze API authentication methods (as of May 2025)
+- Can be scheduled to run at custom intervals
 
 ## Add-ons
 
@@ -37,8 +38,17 @@ MQTT_PORT: 1883
 MQTT_USERNAME: your_mqtt_username  # if required
 MQTT_PASSWORD: your_mqtt_password  # if required
 MQTT_TOPIC: smartmeter/energy/state
-UPDATE_INTERVAL: 3600  # in seconds (default: 1 hour)
+UPDATE_INTERVAL: 86400  # in seconds (default: 24 hours)
+HISTORY_DAYS: 1  # number of days of historical data to fetch
 USE_MOCK_DATA: false  # set to true for testing without real API access
+```
+
+### Advanced Configuration Options
+
+```yaml
+RETRY_COUNT: 3  # number of retry attempts for API calls
+RETRY_DELAY: 10  # delay between retry attempts in seconds
+DEBUG: false  # enable debug logging
 ```
 
 ### Mock Data Mode
@@ -60,11 +70,12 @@ If you encounter issues with the API connection:
 3. Try enabling mock data mode temporarily to verify that the rest of the integration works
 4. Check the add-on logs for detailed error messages
 
-## API Authentication
+### Common Issues
 
-The add-on supports two authentication methods:
+- **Authentication failures**: Make sure your Wiener Netze username and password are correct
+- **No data available**: Verify that your Zählpunkt (ZP) is correct and that your smart meter is activated
+- **MQTT connection issues**: Check that your MQTT broker is running and accessible
 
-1. API Key authentication (default)
-2. OAuth authentication (fallback)
+## Technical Details
 
-The add-on will automatically use the appropriate method based on the API response.
+This add-on uses the [vienna-smartmeter](https://github.com/cretl/vienna-smartmeter) library with PKCE authentication support to communicate with the Wiener Netze API. PKCE (Proof Key for Code Exchange) is required by the Wiener Netze API since May 2025 for secure OAuth authentication.

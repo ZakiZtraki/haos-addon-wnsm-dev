@@ -2,7 +2,7 @@
 FROM python:3.11-alpine
 
 # Install required system packages for Home Assistant
-RUN apk add --no-cache bash jq tzdata ca-certificates
+RUN apk add --no-cache bash jq tzdata ca-certificates git
 
 # Set working directory
 WORKDIR /app

@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.0](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.27...v0.2.0) (2025-05-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* **api:** The addon now uses the vienna-smartmeter library with PKCE authentication support
+
+### Features
+
+* **api:** Switch to vienna-smartmeter library for API communication ([#1](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/issues/1))
+* **auth:** Add support for PKCE authentication required by Wiener Netze API since May 2025
+* **config:** Add HISTORY_DAYS option to control how much historical data is fetched
+* **mock:** Improve mock data generation for testing without API access
+
+### Bug Fixes
+
+* **login:** Fix login issues with Wiener Netze API by implementing PKCE authentication
+* **error:** Improve error handling and logging for API communication failures
+* **docs:** Update documentation with new configuration options and troubleshooting tips
+
 ### [0.1.27](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.26...v0.1.27) (2025-05-29)
 
 

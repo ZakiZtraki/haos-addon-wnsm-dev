@@ -1,6 +1,6 @@
 {
     "name": "Wiener Netze Smartmeter Sync Dev",
-    "version": "0.1.27",
+    "version": "0.2.0",
     "slug": "wnsm_smartmeter",
     "description": "Integration for Wiener Netze Smart Meter that fetches 15-min consumption data and pushes to Home Assistant statistics.",
     "url": "https://github.com/ZakiZtraki/haos-addon-wnsm-dev",
@@ -23,7 +23,9 @@
         "WNSM_USERNAME": "",
         "WNSM_PASSWORD": "",
         "ZP": "",
-        "MQTT_HOST": "core-mosquitto"
+        "MQTT_HOST": "core-mosquitto",
+        "UPDATE_INTERVAL": 86400,
+        "HISTORY_DAYS": 1
     },
     "schema": {
         "WNSM_USERNAME": "str",
@@ -34,7 +36,7 @@
         "MQTT_USERNAME": "str?",
         "MQTT_PASSWORD": "password?",
         "MQTT_TOPIC": "str?",
-        "UPDATE_INTERVAL": "int(86400,)?",
+        "UPDATE_INTERVAL": "int(3600,)?",
         "HISTORY_DAYS": "int(1,90)?",
         "RETRY_COUNT": "int(1,10)?",
         "RETRY_DELAY": "int(1,60)?",
