@@ -29,10 +29,26 @@ try:
     
     # Try importing vienna-smartmeter to verify it's installed
     import vienna_smartmeter
+    import inspect
+    
     try:
         logger.info(f"Using vienna-smartmeter version: {vienna_smartmeter.__version__}")
     except AttributeError:
         logger.info("Using vienna-smartmeter from GitHub (version info not available)")
+    
+    # Check if the Smartmeter class has the bewegungsdaten method
+    if hasattr(vienna_smartmeter.Smartmeter, 'bewegungsdaten'):
+        logger.info("vienna-smartmeter library has bewegungsdaten method")
+    else:
+        logger.warning("vienna-smartmeter library does not have bewegungsdaten method - will use fallback implementation")
+    
+    # Log available methods in debug mode
+    if os.environ.get('DEBUG', '').lower() == 'true' or log_level == logging.DEBUG:
+        try:
+            methods = [m[0] for m in inspect.getmembers(vienna_smartmeter.Smartmeter, predicate=inspect.isfunction)]
+            logger.debug(f"Available methods in Smartmeter class: {methods}")
+        except Exception as e:
+            logger.error(f"Error inspecting Smartmeter class: {e}")
 except ImportError as e:
     logger.error(f"Failed to import required modules: {e}")
     logger.error("Make sure vienna-smartmeter is installed. Run: pip install git+https://github.com/cretl/vienna-smartmeter.git@fix-login-add-pkce")

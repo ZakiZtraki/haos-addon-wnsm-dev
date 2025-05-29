@@ -432,6 +432,24 @@ def fetch_bewegungsdaten(config):
     """
     # Import the vienna-smartmeter library
     from vienna_smartmeter import Smartmeter
+    import inspect
+    
+    # Helper function to inspect the Smartmeter class
+    def inspect_smartmeter_class():
+        """Inspect the Smartmeter class to help with debugging."""
+        try:
+            # Get all methods of the Smartmeter class
+            methods = inspect.getmembers(Smartmeter, predicate=inspect.isfunction)
+            logger.debug(f"Available methods in Smartmeter class: {[m[0] for m in methods]}")
+            
+            # Try to get the signature of the bewegungsdaten method
+            if hasattr(Smartmeter, 'bewegungsdaten'):
+                sig = inspect.signature(Smartmeter.bewegungsdaten)
+                logger.debug(f"Signature of bewegungsdaten method: {sig}")
+            else:
+                logger.warning("bewegungsdaten method not found in Smartmeter class")
+        except Exception as e:
+            logger.error(f"Error inspecting Smartmeter class: {e}")
     
     try:
         # Check if we should use mock data
@@ -443,6 +461,10 @@ def fetch_bewegungsdaten(config):
             username=config.get("WNSM_USERNAME", config.get("USERNAME")),
             password=config.get("WNSM_PASSWORD", config.get("PASSWORD"))
         )
+        
+        # Inspect the Smartmeter class if debug is enabled
+        if config.get("DEBUG", False):
+            inspect_smartmeter_class()
         
         # Login to the service
         logger.info("Logging in to Wiener Netze service")
@@ -471,13 +493,86 @@ def fetch_bewegungsdaten(config):
         
         # Use the bewegungsdaten method to fetch data
         logger.info(f"Fetching bewegungsdaten for zaehlpunkt {zp}")
-        statistics = client.bewegungsdaten(
-            zaehlpunktnummer=zp,
-            date_from=date_from,
-            date_until=date_until
-        )
+        try:
+            # First try with zaehlpunkt parameter (newer versions)
+            statistics = client.bewegungsdaten(
+                zaehlpunkt=zp,
+                date_from=date_from,
+                date_to=date_until
+            )
+        except TypeError as e:
+            if "unexpected keyword argument" in str(e):
+                logger.info("Trying alternative parameter names for bewegungsdaten method")
+                # Try with zaehlpunktnummer parameter (older versions)
+                statistics = client.bewegungsdaten(
+                    zp,  # positional argument
+                    date_from=date_from,
+                    date_to=date_until
+                )
+            else:
+                raise
         
         return statistics
+    except TypeError as e:
+        logger.error(f"Type error in API call: {e}")
+        logger.exception(e)  # Log the full exception traceback
+        
+        # Check if this is a method signature issue
+        if "unexpected keyword argument" in str(e) or "missing required positional argument" in str(e):
+            logger.warning("API method signature mismatch. This might be due to a version mismatch between the addon and the vienna-smartmeter library.")
+            logger.info("Please check the addon logs and report this issue to the addon maintainer.")
+        
+        # If mock data is enabled, return mock data
+        if config.get("USE_MOCK_DATA", False):
+            logger.info("Using mock data as fallback")
+            return _generate_mock_data(date_from, date_until)
+        
+        return []
+    except AttributeError as e:
+        logger.error(f"Attribute error in API call: {e}")
+        logger.exception(e)  # Log the full exception traceback
+        
+        # Check if this is a missing method issue
+        if "has no attribute 'bewegungsdaten'" in str(e):
+            logger.warning("The installed vienna-smartmeter library doesn't have the bewegungsdaten method.")
+            logger.info("Attempting to implement bewegungsdaten functionality directly...")
+            
+            try:
+                # Try to implement the bewegungsdaten functionality directly
+                # This is a fallback for older versions of the library
+                customer_id = client.profil()["defaultGeschaeftspartnerRegistration"]["geschaeftspartner"]
+                
+                # Format dates for the API
+                date_from_str = date_from.strftime("%Y-%m-%d")
+                date_to_str = date_until.strftime("%Y-%m-%d")
+                
+                # Construct the endpoint URL
+                endpoint = f"messdaten/{customer_id}/{zp}/bewegungsdaten"
+                
+                # Make the API request
+                logger.info(f"Making direct API request to {endpoint}")
+                response = client._request(
+                    endpoint,
+                    params={
+                        "dateFrom": date_from_str,
+                        "dateTo": date_to_str
+                    }
+                )
+                
+                logger.info("Successfully fetched bewegungsdaten using direct API call")
+                return response
+            except Exception as fallback_error:
+                logger.error(f"Fallback implementation failed: {fallback_error}")
+                logger.exception(fallback_error)
+        else:
+            logger.warning("Unexpected attribute error. Please report this issue to the addon maintainer.")
+        
+        # If mock data is enabled, return mock data
+        if config.get("USE_MOCK_DATA", False):
+            logger.info("Using mock data as fallback")
+            return _generate_mock_data(date_from, date_until)
+        
+        return []
     except Exception as e:
         logger.error(f"Error fetching Bewegungsdaten: {e}")
         logger.exception(e)  # Log the full exception traceback
