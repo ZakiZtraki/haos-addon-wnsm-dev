@@ -246,52 +246,29 @@ def publish_mqtt_discovery(config):
 def publish_mqtt_message(topic, payload, config):
     """Publish a message to MQTT with appropriate configuration."""
     try:
-        use_external_mqtt = config.get("USE_EXTERNAL_MQTT", False)
+        # Always use direct MQTT connection
+        import paho.mqtt.publish as publish
 
-        if not use_external_mqtt:
-            # Use Home Assistant's MQTT service via bashio
-            import subprocess
+        # Extract host and port
+        mqtt_host = config.get("MQTT_HOST", "localhost")
+        mqtt_port = int(config.get("MQTT_PORT", 1883))
 
-            cmd = [
-                "bashio", "services", "mqtt", "publish",
-                "--topic", topic,
-                "--retain"
-            ]
+        # Prepare auth if credentials provided
+        auth = None
+        if config.get("MQTT_USERNAME") or config.get("MQTT_PASSWORD"):
+            auth = {
+                "username": config.get("MQTT_USERNAME", ""),
+                "password": config.get("MQTT_PASSWORD", "")
+            }
 
-            # Convert payload to JSON string
-            json_payload = json.dumps(payload)
-            cmd.extend(["--payload", json_payload])
-
-            # Execute the command
-            process = subprocess.run(cmd, capture_output=True, text=True)
-
-            if process.returncode != 0:
-                logger.error(f"Failed to publish via bashio: {process.stderr}")
-                return False
-        else:
-            # Use direct MQTT connection for external brokers
-            import paho.mqtt.publish as publish
-
-            # Extract host and port
-            mqtt_host = config.get("MQTT_HOST", "localhost")
-            mqtt_port = int(config.get("MQTT_PORT", 1883))
-
-            # Prepare auth if credentials provided
-            auth = None
-            if config.get("MQTT_USERNAME") or config.get("MQTT_PASSWORD"):
-                auth = {
-                    "username": config.get("MQTT_USERNAME", ""),
-                    "password": config.get("MQTT_PASSWORD", "")
-                }
-
-            publish.single(
-                topic=topic,
-                payload=json.dumps(payload),
-                hostname=mqtt_host,
-                port=mqtt_port,
-                auth=auth,
-                retain=True
-            )
+        publish.single(
+            topic=topic,
+            payload=json.dumps(payload),
+            hostname=mqtt_host,
+            port=mqtt_port,
+            auth=auth,
+            retain=True
+        )
         return True
     except Exception as e:
 
@@ -426,8 +403,8 @@ def fetch_bewegungsdaten(config):
     try:
         # Initialize the client
         client = Smartmeter(
-            username=config["USERNAME"],
-            password=config["PASSWORD"]
+            username=config.get("WNSM_USERNAME", config.get("USERNAME")),
+            password=config.get("WNSM_PASSWORD", config.get("PASSWORD"))
         )
         
         # Fetch the data
