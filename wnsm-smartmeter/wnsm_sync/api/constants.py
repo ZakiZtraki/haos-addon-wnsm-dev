@@ -13,6 +13,15 @@ REDIRECT_URI = "https://smartmeter-web.wienernetze.at/"
 API_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 AUTH_URL = "https://log.wien/auth/realms/logwien/protocol/openid-connect/"  # noqa
 
+# OAuth URLs from the provided credentials
+OAUTH_AUTH_URL = "https://api.wstw.at/invoke/pub.apigateway.oauth2/authorize"
+OAUTH_TOKEN_URL = "https://api.wstw.at/invoke/pub.apigateway.oauth2/getAccessToken"
+OAUTH_REFRESH_URL = "https://api.wstw.at/invoke/pub.oauth/refreshAccessToken"
+
+# OAuth credentials
+OAUTH_CLIENT_ID = "46a6d05c-d0d0-4f2a-889b-f88a2d3919e8"
+OAUTH_CLIENT_SECRET = "d1f784f0-7f81-4593-9336-bf01f3847fdc"
+API_KEY = "291919f1-a91a-4ce2-80ac-ee5a930e2f0f"
 
 LOGIN_ARGS = {
     "client_id": "wn-smartmeter",
