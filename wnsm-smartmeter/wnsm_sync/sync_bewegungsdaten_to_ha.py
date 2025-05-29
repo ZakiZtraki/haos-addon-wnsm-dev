@@ -281,9 +281,39 @@ def publish_mqtt_data(statistics, config):
         logger.warning("No statistics to publish")
         return
 
+    # Check if statistics is a dictionary with 'data' key (from bewegungsdaten API)
+    if isinstance(statistics, dict) and 'data' in statistics:
+        logger.info(f"Converting API response format to statistics format")
+        data_points = statistics['data']
+        logger.info(f"Processing {len(data_points)} data points from API response")
+        
+        processed_stats = []
+        total = 0
+        
+        # Convert API format to expected format
+        for point in data_points:
+            if isinstance(point, dict) and 'timestamp' in point and 'value' in point:
+                total += float(point['value'])
+                processed_stats.append({
+                    "start": point['timestamp'],
+                    "sum": total,
+                    "state": float(point['value'])
+                })
+        
+        statistics = processed_stats
+        logger.info(f"Converted {len(statistics)} data points to expected format")
+
     logger.info(f"Publishing {len(statistics)} entries to MQTT")
 
     for s in statistics:
+        if not isinstance(s, dict):
+            logger.warning(f"Skipping invalid data point (not a dictionary): {s}")
+            continue
+            
+        if 'start' not in s or 'sum' not in s:
+            logger.warning(f"Skipping data point with missing fields: {s}")
+            continue
+            
         topic = f"{config['MQTT_TOPIC']}/{s['start'][:16]}"  # e.g. smartmeter/energy/state/2025-05-16T00:15
         payload = {
             "value": s["sum"],
@@ -294,16 +324,19 @@ def publish_mqtt_data(statistics, config):
 
     # Publish latest value to main topic for current state
     try:
-        latest = statistics[-1]
-        publish_mqtt_message(
-            config["MQTT_TOPIC"],
-            {
-                "value": latest["sum"],
-                "timestamp": latest["start"]
-            },
-            config
-        )
-        logger.info("✅ All entries published to MQTT")
+        if statistics:
+            latest = statistics[-1]
+            publish_mqtt_message(
+                config["MQTT_TOPIC"],
+                {
+                    "value": latest["sum"],
+                    "timestamp": latest["start"]
+                },
+                config
+            )
+            logger.info("✅ All entries published to MQTT")
+        else:
+            logger.warning("No valid statistics to publish as latest value")
     except Exception as e:
         logger.error(f"Failed to publish latest value: {e}")
 

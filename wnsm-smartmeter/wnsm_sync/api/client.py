@@ -267,59 +267,23 @@ class Smartmeter:
             self.reset()
             
         if not self.is_logged_in():
-            logger.info("Not logged in, using OAuth flow")
+            logger.info("Not logged in, using API Key authentication")
             try:
-                # Get access token using client credentials grant
-                logger.info("Getting access token using client credentials grant")
+                # Skip OAuth and use API Key directly
+                logger.info("Using API Key for authentication")
                 
-                # Prepare the token request
-                token_data = {
-                    "grant_type": "client_credentials",
-                    "client_id": const.OAUTH_CLIENT_ID,
-                    "client_secret": const.OAUTH_CLIENT_SECRET,
-                    "scope": const.OAUTH_SCOPE  # Use the constant for the scope
-                }
+                # Set API gateway tokens
+                self._access_token = "api_key_auth"  # Dummy token
+                self._refresh_token = ""
+                self._api_gateway_token = const.API_KEY
+                self._api_gateway_b2b_token = const.OAUTH_CLIENT_ID
                 
-                # Make the token request
-                logger.info(f"Making token request to {const.OAUTH_TOKEN_URL}")
-                response = self.session.post(
-                    const.OAUTH_TOKEN_URL,
-                    data=token_data,
-                    headers={"Content-Type": "application/x-www-form-urlencoded"}
-                )
-                
-                # Log the response
-                logger.info(f"Token response status: {response.status_code}")
-                logger.info(f"Token response headers: {response.headers}")
-                
-                # Log a preview of the response content
-                content_preview = response.content[:500].decode('utf-8', errors='replace')
-                logger.info(f"Token response content preview: {content_preview}")
-                
-                # If we can't get a token, fall back to mock data
-                if response.status_code != 200:
-                    logger.warning("Could not get OAuth token, using mock data")
-                    self._access_token = "mock_token"
-                    self._refresh_token = "mock_refresh_token"
-                    self._api_gateway_token = const.API_KEY
-                    self._api_gateway_b2b_token = const.OAUTH_CLIENT_ID
-                else:
-                    # Parse the token response
-                    token_response = response.json()
-                    self._access_token = token_response.get("access_token")
-                    self._refresh_token = token_response.get("refresh_token", "")
-                    
-                    # Set API gateway tokens
-                    self._api_gateway_token = const.API_KEY
-                    self._api_gateway_b2b_token = const.OAUTH_CLIENT_ID
-                
-                # Set expiration times (1 hour for access token, 1 day for refresh token)
+                # Set expiration times (1 hour for access token)
                 now = datetime.now()
-                expires_in = token_response.get("expires_in", 3600) if response.status_code == 200 else 3600
-                self._access_token_expiration = now + timedelta(seconds=expires_in)
+                self._access_token_expiration = now + timedelta(hours=1)
                 self._refresh_token_expiration = now + timedelta(days=1)
                 
-                logger.info("OAuth credentials set successfully")
+                logger.info("API Key authentication set successfully")
                 logger.info(f"Access Token valid until {self._access_token_expiration}")
                 
             except Exception as error:
@@ -662,14 +626,11 @@ class Smartmeter:
         if query:
             url += ("?" if "?" not in endpoint else "&") + parse.urlencode(query)
 
-        # Set up headers with API key
+        # Set up headers with API key only (no OAuth)
         headers = {
             "X-Gateway-APIKey": const.API_KEY,
+            "apikey": const.API_KEY  # Try both header formats
         }
-        
-        # Add authorization header if we have an access token
-        if self._access_token:
-            headers["Authorization"] = f"Bearer {self._access_token}"
 
         if extra_headers:
             headers.update(extra_headers)
