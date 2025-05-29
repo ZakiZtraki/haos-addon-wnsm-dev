@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file. See [standa
 ### [0.2.3](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.2...v0.2.3) (2025-05-29)
 
 
+### Features
+
+* add data format conversion and robust processing for bewegungsdaten API responses ([6c63638](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/commit/6c636384e6677912e182bf59737f593c51a0e07e))
+
+### [0.2.3](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.2...v0.2.3) (2025-05-29)
+
+
 ### Bug Fixes
 
 * Add data format conversion to handle different response formats from vienna-smartmeter library
