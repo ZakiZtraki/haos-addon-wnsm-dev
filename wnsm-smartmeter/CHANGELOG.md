@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.7](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.6...v0.2.7) (2025-05-29)
+
+
+### Bug Fixes
+
+* Fix sensor naming in MQTT discovery configuration
+* Improve data publishing to preserve historical data
+* Add data sampling to prevent overwhelming Home Assistant
+* Group data by day for better statistics visualization
+
 ### [0.2.6](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.5...v0.2.6) (2025-05-29)
 
 

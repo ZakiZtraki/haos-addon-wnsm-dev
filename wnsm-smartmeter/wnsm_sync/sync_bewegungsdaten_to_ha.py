@@ -221,7 +221,7 @@ def publish_mqtt_discovery(config):
         device_id = config["ZP"].lower().replace("0", "")
         discovery_topic = f"homeassistant/sensor/wnsm_sync_{device_id}/config"
         discovery_payload = {
-            "name": "Wiener Netze Smartmeter Sync",
+            "name": "Energy Consumption",  # Changed to a simpler name
             "state_topic": config["MQTT_TOPIC"],
             "unit_of_measurement": "kWh",
             "device_class": "energy",
@@ -231,7 +231,7 @@ def publish_mqtt_discovery(config):
             "timestamp_template": "{{ value_json.timestamp }}",
             "device": {
                 "identifiers": [f"wnsm_sync_{device_id}"],
-                "name": "Wiener Netze Smart Meter",
+                "name": "Wiener Netze Smart Meter",  # This is the device name
                 "manufacturer": "Wiener Netze",
                 "model": "Smart Meter"
             }
@@ -290,6 +290,15 @@ def publish_mqtt_data(statistics, config):
 
     logger.info(f"Publishing {len(statistics)} entries to MQTT")
 
+    # Sort statistics by timestamp to ensure proper ordering
+    statistics.sort(key=lambda x: x.get('start', ''))
+    
+    # Group statistics by day to avoid overwhelming Home Assistant
+    from datetime import datetime
+    from collections import defaultdict
+    
+    # Group by day
+    days_data = defaultdict(list)
     for s in statistics:
         if not isinstance(s, dict):
             logger.warning(f"Skipping invalid data point (not a dictionary): {s}")
@@ -298,14 +307,42 @@ def publish_mqtt_data(statistics, config):
         if 'start' not in s or 'sum' not in s:
             logger.warning(f"Skipping data point with missing fields: {s}")
             continue
+        
+        # Extract the date part (YYYY-MM-DD) from the timestamp
+        try:
+            date_part = s['start'][:10]  # Extract YYYY-MM-DD part
+            days_data[date_part].append(s)
+        except Exception as e:
+            logger.warning(f"Error extracting date from timestamp {s['start']}: {e}")
+            continue
+    
+    # Process each day's data
+    total_published = 0
+    for day, day_stats in days_data.items():
+        logger.info(f"Publishing {len(day_stats)} entries for day {day}")
+        
+        # Publish a maximum of 50 entries per day to avoid overwhelming Home Assistant
+        # This will sample the data if there are too many points
+        max_entries = 50
+        if len(day_stats) > max_entries:
+            # Sample the data to get a representative set
+            step = len(day_stats) // max_entries
+            sampled_stats = day_stats[::step][:max_entries]
+            logger.info(f"Sampling {len(day_stats)} entries down to {len(sampled_stats)} for day {day}")
+            day_stats = sampled_stats
+        
+        # Publish each entry for this day
+        for s in day_stats:
+            topic = f"{config['MQTT_TOPIC']}/{s['start'][:16]}"  # e.g. smartmeter/energy/state/2025-05-16T00:15
+            payload = {
+                "value": s["sum"],
+                "timestamp": s["start"]
+            }
             
-        topic = f"{config['MQTT_TOPIC']}/{s['start'][:16]}"  # e.g. smartmeter/energy/state/2025-05-16T00:15
-        payload = {
-            "value": s["sum"],
-            "timestamp": s["start"]
-        }
-
-        publish_mqtt_message(topic, payload, config)
+            publish_mqtt_message(topic, payload, config)
+            total_published += 1
+    
+    logger.info(f"Published a total of {total_published} entries across {len(days_data)} days")
 
     # Publish latest value to main topic for current state
     try:
