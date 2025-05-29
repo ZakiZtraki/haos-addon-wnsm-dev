@@ -89,6 +89,7 @@ def load_config():
     # Set defaults for optional parameters
     defaults = {
         "MQTT_PORT": 1883,
+        "MQTT_TOPIC": "smartmeter/energy/state",
         "UPDATE_INTERVAL": 3600
     }
     

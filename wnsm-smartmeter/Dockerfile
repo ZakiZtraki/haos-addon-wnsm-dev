@@ -1,5 +1,5 @@
 # Use Python as the base image for easier dependency management
-FROM python:3.9-alpine
+FROM python:3.11-alpine
 
 # Install required system packages for Home Assistant
 RUN apk add --no-cache bash jq tzdata ca-certificates
