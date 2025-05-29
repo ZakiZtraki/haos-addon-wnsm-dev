@@ -407,6 +407,10 @@ def fetch_bewegungsdaten(config):
             password=config.get("WNSM_PASSWORD", config.get("PASSWORD"))
         )
         
+        # Login to the service
+        logger.info("Logging in to Wiener Netze service")
+        client.login()
+        
         # Fetch the data
         zp = config.get("ZP")
         days = int(config.get("HISTORY_DAYS", 1))
@@ -415,6 +419,7 @@ def fetch_bewegungsdaten(config):
         from datetime import date, timedelta
         date_until = date.today()
         date_from = date_until - timedelta(days=days)
+        logger.info(f"Fetching data from {date_from} to {date_until}")
         statistics = client.bewegungsdaten(zp, date_from=date_from, date_until=date_until)
         
         return statistics
