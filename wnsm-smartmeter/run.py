@@ -158,14 +158,20 @@ def main():
             statistics = fetch_bewegungsdaten(config)
 
             if statistics:
-                # Check if statistics is a dictionary with 'data' key
-                if isinstance(statistics, dict) and 'data' in statistics:
-                    logger.info(f"Fetched {len(statistics['data'])} data points")
+                # Check the format of the statistics
+                if isinstance(statistics, dict):
+                    if 'data' in statistics:
+                        logger.info(f"Fetched {len(statistics['data'])} data points")
+                    elif 'values' in statistics:
+                        logger.info(f"Fetched {len(statistics['values'])} data points")
+                    else:
+                        logger.info(f"Fetched data in dictionary format with keys: {list(statistics.keys())}")
                 elif isinstance(statistics, list):
                     logger.info(f"Fetched {len(statistics)} data points")
                 else:
                     logger.info(f"Fetched data in unexpected format: {type(statistics)}")
                 
+                # The publish_mqtt_data function will handle the data format conversion
                 publish_mqtt_data(statistics, config)
             else:
                 logger.warning("No data fetched from Wiener Netze")

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.3](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.2...v0.2.3) (2025-05-29)
+
+
+### Bug Fixes
+
+* Add data format conversion to handle different response formats from vienna-smartmeter library
+* Improve error handling and logging for data processing
+* Add robust data processing for various API response formats
+
 ### [0.2.2](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.1...v0.2.2) (2025-05-29)
 
 

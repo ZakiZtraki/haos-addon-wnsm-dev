@@ -281,27 +281,12 @@ def publish_mqtt_data(statistics, config):
         logger.warning("No statistics to publish")
         return
 
-    # Check if statistics is a dictionary with 'data' key (from bewegungsdaten API)
-    if isinstance(statistics, dict) and 'data' in statistics:
-        logger.info(f"Converting API response format to statistics format")
-        data_points = statistics['data']
-        logger.info(f"Processing {len(data_points)} data points from API response")
-        
-        processed_stats = []
-        total = 0
-        
-        # Convert API format to expected format
-        for point in data_points:
-            if isinstance(point, dict) and 'timestamp' in point and 'value' in point:
-                total += float(point['value'])
-                processed_stats.append({
-                    "start": point['timestamp'],
-                    "sum": total,
-                    "state": float(point['value'])
-                })
-        
-        statistics = processed_stats
-        logger.info(f"Converted {len(statistics)} data points to expected format")
+    # The statistics should already be in the correct format after processing
+    # But let's add a check just in case
+    if isinstance(statistics, dict):
+        logger.info(f"Fetched data in unexpected format: {type(statistics)}")
+        # Try to process it using our processor function
+        statistics = process_bewegungsdaten_response(statistics)
 
     logger.info(f"Publishing {len(statistics)} entries to MQTT")
 
@@ -324,7 +309,7 @@ def publish_mqtt_data(statistics, config):
 
     # Publish latest value to main topic for current state
     try:
-        if statistics:
+        if statistics and len(statistics) > 0:
             latest = statistics[-1]
             publish_mqtt_message(
                 config["MQTT_TOPIC"],
@@ -339,6 +324,7 @@ def publish_mqtt_data(statistics, config):
             logger.warning("No valid statistics to publish as latest value")
     except Exception as e:
         logger.error(f"Failed to publish latest value: {e}")
+        logger.exception(e)  # Log the full exception traceback
 
 def main():
     """Main function to run the sync process."""
@@ -495,20 +481,32 @@ def fetch_bewegungsdaten(config):
         logger.info(f"Fetching bewegungsdaten for zaehlpunkt {zp}")
         try:
             # First try with zaehlpunkt parameter (newer versions)
-            statistics = client.bewegungsdaten(
+            raw_data = client.bewegungsdaten(
                 zaehlpunkt=zp,
                 date_from=date_from,
                 date_to=date_until
             )
+            
+            # Log the structure of the returned data for debugging
+            logger.debug(f"Raw data structure: {type(raw_data)}")
+            if isinstance(raw_data, dict):
+                logger.debug(f"Raw data keys: {raw_data.keys()}")
+                
+            # Process the data into the expected format
+            statistics = process_bewegungsdaten_response(raw_data)
+            
         except TypeError as e:
             if "unexpected keyword argument" in str(e):
                 logger.info("Trying alternative parameter names for bewegungsdaten method")
                 # Try with zaehlpunktnummer parameter (older versions)
-                statistics = client.bewegungsdaten(
+                raw_data = client.bewegungsdaten(
                     zp,  # positional argument
                     date_from=date_from,
                     date_to=date_until
                 )
+                
+                # Process the data into the expected format
+                statistics = process_bewegungsdaten_response(raw_data)
             else:
                 raise
         
@@ -584,39 +582,161 @@ def fetch_bewegungsdaten(config):
         
         return []
 
+def process_bewegungsdaten_response(raw_data):
+    """
+    Process the response from the bewegungsdaten method into a standardized format.
+    
+    Args:
+        raw_data: The raw data returned by the bewegungsdaten method
+        
+    Returns:
+        list: A list of dictionaries with standardized format
+    """
+    logger.debug(f"Processing bewegungsdaten response of type: {type(raw_data)}")
+    
+    # Initialize an empty list for the processed data
+    processed_data = []
+    
+    try:
+        # Handle different response formats
+        if isinstance(raw_data, dict):
+            # Format 1: Dictionary with 'data' key containing a list of data points
+            if 'data' in raw_data and isinstance(raw_data['data'], list):
+                logger.info(f"Processing data in format 1 with {len(raw_data['data'])} data points")
+                
+                # Convert each data point to the expected format
+                for point in raw_data['data']:
+                    if isinstance(point, dict) and 'timestamp' in point and 'value' in point:
+                        processed_data.append({
+                            "start": point['timestamp'],
+                            "sum": float(point['value']),
+                            "state": float(point['value'])
+                        })
+            
+            # Format 2: Dictionary with 'descriptor' and 'values' keys
+            elif 'descriptor' in raw_data and 'values' in raw_data:
+                logger.info("Processing data in format 2")
+                
+                # Extract values and convert to the expected format
+                values = raw_data.get('values', [])
+                if isinstance(values, list):
+                    running_sum = 0
+                    for value in values:
+                        if isinstance(value, dict) and 'timestamp' in value and 'value' in value:
+                            value_float = float(value['value'])
+                            running_sum += value_float
+                            processed_data.append({
+                                "start": value['timestamp'],
+                                "sum": running_sum,
+                                "state": value_float
+                            })
+            
+            # Format 3: Dictionary with other structure
+            else:
+                logger.warning(f"Unknown dictionary format with keys: {raw_data.keys()}")
+                # Try to extract any data we can find
+                for key, value in raw_data.items():
+                    if isinstance(value, list):
+                        logger.info(f"Found list under key '{key}' with {len(value)} items")
+                        running_sum = 0
+                        for item in value:
+                            if isinstance(item, dict):
+                                # Look for timestamp and value fields with various possible names
+                                timestamp = None
+                                value_num = None
+                                
+                                # Try to find timestamp field
+                                for ts_field in ['timestamp', 'time', 'date', 'zeitpunkt', 'zeit']:
+                                    if ts_field in item:
+                                        timestamp = item[ts_field]
+                                        break
+                                
+                                # Try to find value field
+                                for val_field in ['value', 'wert', 'verbrauch', 'consumption']:
+                                    if val_field in item:
+                                        try:
+                                            value_num = float(item[val_field])
+                                            break
+                                        except (ValueError, TypeError):
+                                            pass
+                                
+                                if timestamp and value_num is not None:
+                                    running_sum += value_num
+                                    processed_data.append({
+                                        "start": timestamp,
+                                        "sum": running_sum,
+                                        "state": value_num
+                                    })
+        
+        # Handle list response
+        elif isinstance(raw_data, list):
+            logger.info(f"Processing data as list with {len(raw_data)} items")
+            running_sum = 0
+            for item in raw_data:
+                if isinstance(item, dict):
+                    # Look for timestamp and value fields with various possible names
+                    timestamp = None
+                    value_num = None
+                    
+                    # Try to find timestamp field
+                    for ts_field in ['timestamp', 'time', 'date', 'zeitpunkt', 'zeit']:
+                        if ts_field in item:
+                            timestamp = item[ts_field]
+                            break
+                    
+                    # Try to find value field
+                    for val_field in ['value', 'wert', 'verbrauch', 'consumption']:
+                        if val_field in item:
+                            try:
+                                value_num = float(item[val_field])
+                                break
+                            except (ValueError, TypeError):
+                                pass
+                    
+                    if timestamp and value_num is not None:
+                        running_sum += value_num
+                        processed_data.append({
+                            "start": timestamp,
+                            "sum": running_sum,
+                            "state": value_num
+                        })
+        
+        logger.info(f"Processed {len(processed_data)} data points")
+        return processed_data
+    
+    except Exception as e:
+        logger.error(f"Error processing bewegungsdaten response: {e}")
+        logger.exception(e)
+        return []
+
 def _generate_mock_data(date_from, date_until):
     """Generate mock data for testing purposes."""
     from datetime import datetime, timedelta
     
     # Create a simple mock response with some data
-    mock_data = {
-        "descriptor": {
-            "zaehlpunktnummer": "mock_zaehlpunkt",
-            "rolle": "mock_rolle",
-            "zeitpunktVon": date_from.strftime("%Y-%m-%dT00:00:00.000Z"),
-            "zeitpunktBis": date_until.strftime("%Y-%m-%dT23:59:59.999Z")
-        },
-        "data": []
-    }
+    mock_data = []
     
     # Generate data points every 15 minutes
     current_date = datetime.combine(date_from, datetime.min.time())
     end_date = datetime.combine(date_until, datetime.max.time())
     
+    running_sum = 0
     while current_date <= end_date:
         # Generate a random value between 0.1 and 1.0
         import random
         value = round(random.uniform(0.1, 1.0), 3)
+        running_sum += value
         
-        mock_data["data"].append({
-            "timestamp": current_date.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
-            "value": value
+        mock_data.append({
+            "start": current_date.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+            "sum": running_sum,
+            "state": value
         })
         
         # Increment by 15 minutes
         current_date += timedelta(minutes=15)
     
-    logger.info(f"Generated {len(mock_data['data'])} mock data points")
+    logger.info(f"Generated {len(mock_data)} mock data points")
     return mock_data
 
 if __name__ == "__main__":
