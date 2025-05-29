@@ -86,9 +86,38 @@ class Smartmeter:
             )
         
         try:
+            # Log the content for debugging
+            logger.debug(f"Login page content: {result.content[:500]}...")
+            
             tree = html.fromstring(result.content)
-            action = tree.xpath("(//form/@action)")[0]
-            return action
+            
+            # Try different XPath queries to find the form action
+            action = None
+            
+            # Original XPath
+            form_actions = tree.xpath("//form/@action")
+            if form_actions:
+                action = form_actions[0]
+                logger.debug(f"Found form action using original XPath: {action}")
+                return action
+                
+            # Alternative XPath - look for any form
+            forms = tree.xpath("//form")
+            if forms:
+                for form in forms:
+                    if 'action' in form.attrib:
+                        action = form.attrib['action']
+                        logger.debug(f"Found form action in form attributes: {action}")
+                        return action
+            
+            # If we still don't have an action, try to extract from the URL
+            if 'Location' in result.headers:
+                redirect_url = result.headers['Location']
+                logger.debug(f"Using redirect URL as action: {redirect_url}")
+                return redirect_url
+                
+            # If we get here, we couldn't find the action
+            raise SmartmeterConnectionError("Could not extract login form action URL - no form found")
         except (IndexError, ValueError) as exception:
             raise SmartmeterConnectionError("Could not extract login form action URL") from exception
 
