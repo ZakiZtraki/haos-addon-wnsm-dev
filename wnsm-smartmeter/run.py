@@ -5,12 +5,18 @@ import sys
 import logging
 import time
 
+# Set log level based on DEBUG environment variable
+log_level = logging.DEBUG if os.environ.get("DEBUG", "").lower() in ("true", "1", "yes") else logging.INFO
+
 logging.basicConfig(
-    level=logging.INFO,
+    level=log_level,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler()]
 )
 logger = logging.getLogger("wnsm-addon")
+
+if log_level == logging.DEBUG:
+    logger.debug("Debug logging enabled")
 
 try:
     from wnsm_sync.sync_bewegungsdaten_to_ha import (
@@ -24,7 +30,12 @@ except ImportError as e:
 
 def load_config_from_env():
     """Load configuration from environment variables set by Home Assistant."""
-    return {
+    # Debug: Print all environment variables to help diagnose issues
+    logger.debug("Environment variables:")
+    for key, value in os.environ.items():
+        logger.debug(f"  {key}: {value if 'PASSWORD' not in key else '****'}")
+    
+    config = {
         "WNSM_USERNAME": os.environ.get("WNSM_USERNAME"),
         "WNSM_PASSWORD": os.environ.get("WNSM_PASSWORD"),
         "ZP": os.environ.get("ZP"),
@@ -35,6 +46,13 @@ def load_config_from_env():
         "MQTT_TOPIC": os.environ.get("MQTT_TOPIC"),
         "UPDATE_INTERVAL": int(os.environ.get("UPDATE_INTERVAL", 3600))
     }
+    
+    # Debug: Print loaded config
+    logger.debug("Loaded configuration:")
+    for key, value in config.items():
+        logger.debug(f"  {key}: {value if 'PASSWORD' not in key else '****'}")
+    
+    return config
 
 def main():
     try:
@@ -45,7 +63,7 @@ def main():
 
         if missing_fields:
             logger.error(f"Missing required configuration: {', '.join(missing_fields)}")
-        sys.exit(1)
+            sys.exit(1)
 
         logger.info("Wiener Netze Smart Meter Add-on started")
 

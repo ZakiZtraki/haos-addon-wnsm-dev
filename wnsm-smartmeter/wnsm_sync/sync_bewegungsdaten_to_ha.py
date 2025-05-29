@@ -14,13 +14,19 @@ import paho.mqtt.publish as publish
 import requests
 from pathlib import Path
 
+# Set log level based on DEBUG environment variable
+log_level = logging.DEBUG if os.environ.get("DEBUG", "").lower() in ("true", "1", "yes") else logging.INFO
+
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=log_level,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 logger = logging.getLogger("wnsm_smartmeter")
+
+if log_level == logging.DEBUG:
+    logger.debug("Debug logging enabled")
 
 # === CONFIGURATION ===
 # Configuration from environment variables with fallbacks to options.json
@@ -28,9 +34,9 @@ def load_config():
     """Load configuration from environment or options.json file."""
     config = {
         # Required parameters from user
-        "USERNAME": os.getenv("WNSM_USERNAME"),
-        "PASSWORD": os.getenv("WNSM_PASSWORD"),
-        "ZP": os.getenv("WNSM_ZP"),
+        "USERNAME": os.getenv("WNSM_USERNAME") or os.getenv("USERNAME"),
+        "PASSWORD": os.getenv("WNSM_PASSWORD") or os.getenv("PASSWORD"),
+        "ZP": os.getenv("WNSM_ZP") or os.getenv("ZP"),
         "USE_EXTERNAL_MQTT": os.getenv("USE_EXTERNAL_MQTT"),
         # Optional parameters with defaults
         "HA_URL": os.getenv("HA_URL", "http://homeassistant:8123"),
@@ -47,10 +53,21 @@ def load_config():
         "SESSION_FILE": os.getenv("SESSION_FILE", "/data/wnsm_session.json")
     }
 
+    # Debug: Print all environment variables to help diagnose issues
+    logger.debug("Environment variables:")
+    for key, value in os.environ.items():
+        logger.debug(f"  {key}: {value if 'PASSWORD' not in key else '****'}")
+    
+    # Debug: Print current config values
+    logger.debug("Current config values:")
+    for key, value in config.items():
+        logger.debug(f"  {key}: {value if 'PASSWORD' not in key else '****'}")
+    
     # If any required values are missing, fall back to options.json
     required_keys = ["USERNAME", "PASSWORD", "ZP"]
-    if not all(config.get(key) for key in required_keys):
-        logger.info("Some required configuration missing - loading from options.json")
+    missing_keys = [key for key in required_keys if not config.get(key)]
+    if missing_keys:
+        logger.info(f"Some required configuration missing: {', '.join(missing_keys)} - loading from options.json")
         try:
             with open("/data/options.json") as f:
                 opts = json.load(f)
