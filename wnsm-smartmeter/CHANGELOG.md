@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file. See [standa
 ### [0.1.27](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.26...v0.1.27) (2025-05-29)
 
 
+### Features
+
+* **api:** improve URL handling and add headers for API requests ([7650242](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/commit/76502424cac88148a4a02c317f859bf79feca8e7))
+
+### [0.1.27](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.26...v0.1.27) (2025-05-29)
+
+
 ### Bug Fixes
 
 * **api:** fix URL joining for API endpoints to properly include base path
