@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file. See [standa
 ### [0.2.7](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.6...v0.2.7) (2025-05-29)
 
 
+### Features
+
+* update MQTT discovery name and enhance data publishing with daily grouping and sampling ([34c0ded](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/commit/34c0dedc1a2fc3d04a12fdaf4fb28a28511e45c2))
+
+### [0.2.7](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.6...v0.2.7) (2025-05-29)
+
+
 ### Bug Fixes
 
 * Fix sensor naming in MQTT discovery configuration
