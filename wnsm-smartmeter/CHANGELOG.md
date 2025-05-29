@@ -7,6 +7,13 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Features
 
+* enhance data fetching with granularity support for 15-minute intervals ([5005ca8](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/commit/5005ca8817f2a1a20753722ce70065527b400438))
+
+### [0.2.5](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.4...v0.2.5) (2025-05-29)
+
+
+### Features
+
 * Add support for daily data format from Wiener Netze API
 * Add granularity parameter to request 15-minute interval data
 * Convert daily data to hourly entries for better visualization
