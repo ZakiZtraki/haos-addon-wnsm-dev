@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.27](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.26...v0.1.27) (2025-05-29)
+
+
+### Bug Fixes
+
+* **api:** fix URL joining for API endpoints to properly include base path
+* **api:** update API headers to include Accept and Content-Type
+* **api:** remove leading slashes from endpoint definitions for proper URL construction
+
+### [0.1.26](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.25...v0.1.26) (2025-05-29)
+
+
+### Features
+
+* **config:** add USE_MOCK_DATA option for testing and development ([82be8f5](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/commit/82be8f52b51eadf13b27f02490e936795b1f2908))
+
 ### [0.1.26](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.1.25...v0.1.26) (2025-05-29)
 
 

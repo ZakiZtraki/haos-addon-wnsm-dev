@@ -447,6 +447,7 @@ class Smartmeter:
             SmartmeterConnectionError: If connection fails or token is invalid.
         """
         logger.info(f"API call to {endpoint} (base: {base_url})")
+        logger.info(f"Checking token validity")
         
         # Check if we should use mock data
         # This can be controlled via configuration
@@ -629,15 +630,23 @@ class Smartmeter:
 
         if base_url is None:
             base_url = const.API_URL
-        url = parse.urljoin(base_url, endpoint)
+            
+        # Make sure the endpoint doesn't start with a slash if it's going to be joined
+        if endpoint.startswith('/'):
+            endpoint = endpoint[1:]
+            
+        # Properly join the base URL and endpoint
+        url = parse.urljoin(base_url + '/', endpoint)
 
         if query:
             url += ("?" if "?" not in endpoint else "&") + parse.urlencode(query)
 
-        # Set up headers with API key only (no OAuth)
+        # Set up headers with API key
         headers = {
             "X-Gateway-APIKey": const.API_KEY,
-            "apikey": const.API_KEY  # Try both header formats
+            "apikey": const.API_KEY,  # Try both header formats
+            "Accept": "application/json",
+            "Content-Type": "application/json"
         }
 
         if extra_headers:
@@ -685,7 +694,13 @@ class Smartmeter:
 
         if base_url is None:
             base_url = const.API_URL
-        url = parse.urljoin(base_url, endpoint)
+            
+        # Make sure the endpoint doesn't start with a slash if it's going to be joined
+        if endpoint.startswith('/'):
+            endpoint = endpoint[1:]
+            
+        # Properly join the base URL and endpoint
+        url = parse.urljoin(base_url + '/', endpoint)
 
         if query:
             url += ("?" if "?" not in endpoint else "&") + parse.urlencode(query)

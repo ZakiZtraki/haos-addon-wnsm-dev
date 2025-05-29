@@ -38,10 +38,10 @@ LOGIN_ARGS = {
 
 # API Endpoints from the schema
 ENDPOINTS = {
-    "zaehlpunkte": "/zaehlpunkte",
-    "zaehlpunkte_messwerte": "/zaehlpunkte/messwerte",
-    "zaehlpunkt": "/zaehlpunkte/{zaehlpunkt}",
-    "zaehlpunkt_messwerte": "/zaehlpunkte/{zaehlpunkt}/messwerte"
+    "zaehlpunkte": "zaehlpunkte",  # No leading slash for proper URL joining
+    "zaehlpunkte_messwerte": "zaehlpunkte/messwerte",
+    "zaehlpunkt": "zaehlpunkte/{zaehlpunkt}",
+    "zaehlpunkt_messwerte": "zaehlpunkte/{zaehlpunkt}/messwerte"
 }
 
 VALID_OBIS_CODES = {
