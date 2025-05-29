@@ -412,7 +412,10 @@ def fetch_bewegungsdaten(config):
         days = int(config.get("HISTORY_DAYS", 1))
         
         # Fetch data from API
-        statistics = client.get_bewegungsdaten(zp, days)
+        from datetime import date, timedelta
+        date_until = date.today()
+        date_from = date_until - timedelta(days=days)
+        statistics = client.bewegungsdaten(zp, date_from=date_from, date_until=date_until)
         
         return statistics
     except Exception as e:
