@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.5](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.4...v0.2.5) (2025-05-29)
+
+
+### Features
+
+* Add support for daily data format from Wiener Netze API
+* Add granularity parameter to request 15-minute interval data
+* Convert daily data to hourly entries for better visualization
+* Improve error handling for different API response formats
+
 ### [0.2.4](https://github.com/ZakiZtraki/haos-addon-wnsm-dev/compare/v0.2.3...v0.2.4) (2025-05-29)
 
 

@@ -486,12 +486,25 @@ def fetch_bewegungsdaten(config):
         # Use the bewegungsdaten method to fetch data
         logger.info(f"Fetching bewegungsdaten for zaehlpunkt {zp}")
         try:
-            # First try with zaehlpunkt parameter (newer versions)
-            raw_data = client.bewegungsdaten(
-                zaehlpunkt=zp,
-                date_from=date_from,
-                date_to=date_until
-            )
+            # Try to fetch with granularity parameter (for 15-min intervals)
+            try:
+                raw_data = client.bewegungsdaten(
+                    zaehlpunkt=zp,
+                    date_from=date_from,
+                    date_to=date_until,
+                    granularity="QH"  # QH = Quarter Hour
+                )
+                logger.info("Successfully fetched data with granularity=QH parameter")
+            except TypeError as e:
+                if "unexpected keyword argument 'granularity'" in str(e):
+                    logger.info("API doesn't support granularity parameter, trying without it")
+                    raw_data = client.bewegungsdaten(
+                        zaehlpunkt=zp,
+                        date_from=date_from,
+                        date_to=date_until
+                    )
+                else:
+                    raise
             
             # Log the structure of the returned data for debugging
             logger.debug(f"Raw data structure: {type(raw_data)}")
@@ -648,6 +661,7 @@ def process_bewegungsdaten_response(raw_data, config=None):
                 if isinstance(values, list):
                     running_sum = 0
                     for value in values:
+                        # Format 2.1: Dictionary with 'timestamp' and 'value' keys (15-min intervals)
                         if isinstance(value, dict) and 'timestamp' in value and 'value' in value:
                             value_float = float(value['value'])
                             running_sum += value_float
@@ -656,6 +670,46 @@ def process_bewegungsdaten_response(raw_data, config=None):
                                 "sum": running_sum,
                                 "state": value_float
                             })
+                        # Format 2.2: Dictionary with 'wert', 'zeitpunktVon', and 'zeitpunktBis' keys (daily data)
+                        elif isinstance(value, dict) and 'wert' in value and 'zeitpunktVon' in value and 'zeitpunktBis' in value:
+                            value_float = float(value['wert'])
+                            running_sum += value_float
+                            
+                            # Use zeitpunktVon as the timestamp
+                            timestamp = value['zeitpunktVon']
+                            
+                            # Log the daily data
+                            logger.info(f"Processing daily data: {timestamp} to {value['zeitpunktBis']}, value: {value_float} kWh")
+                            
+                            # Create 24 hourly entries to distribute the daily value
+                            from datetime import datetime, timedelta
+                            try:
+                                # Parse the timestamp
+                                dt = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ")
+                                
+                                # Calculate hourly value (divide by 24 for hourly distribution)
+                                hourly_value = value_float / 24
+                                
+                                # Create 24 hourly entries
+                                for hour in range(24):
+                                    hour_dt = dt + timedelta(hours=hour)
+                                    hour_timestamp = hour_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+                                    
+                                    processed_data.append({
+                                        "start": hour_timestamp,
+                                        "sum": running_sum - (value_float - (hourly_value * (hour + 1))),
+                                        "state": hourly_value
+                                    })
+                                
+                                logger.info(f"Created {24} hourly entries for daily value {value_float} kWh")
+                            except Exception as e:
+                                logger.error(f"Error creating hourly entries: {e}")
+                                # If we can't create hourly entries, just use the daily value
+                                processed_data.append({
+                                    "start": timestamp,
+                                    "sum": running_sum,
+                                    "state": value_float
+                                })
                         else:
                             logger.warning(f"Skipping invalid value item: {value}")
             
