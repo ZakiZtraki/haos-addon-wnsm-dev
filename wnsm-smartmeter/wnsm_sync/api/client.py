@@ -480,70 +480,234 @@ class Smartmeter:
         """
         logger.info(f"API call to {endpoint} (base: {base_url})")
         
-        # Always return mock data for now until we figure out the API
-        logger.info("Returning mock data for all API calls")
+        # Check if we should use mock data
+        use_mock = True
         
-        # For bewegungsdaten endpoint
-        if "bewegungsdaten" in endpoint or endpoint == "user/messwerte/bewegungsdaten":
-            logger.info("Returning mock bewegungsdaten")
+        if use_mock:
+            logger.info("Using mock data for API calls")
             
-            # Create a simple mock response with some data
-            mock_data = {
-                "descriptor": {
-                    "zaehlpunktnummer": query.get("zaehlpunktnummer", "mock_zaehlpunkt"),
-                    "rolle": query.get("rolle", "mock_rolle"),
-                    "zeitpunktVon": query.get("zeitpunktVon", "2025-05-28T00:00:00.000Z"),
-                    "zeitpunktBis": query.get("zeitpunktBis", "2025-05-29T23:59:59.999Z")
-                },
-                "data": [
-                    {
-                        "timestamp": "2025-05-28T00:15:00.000Z",
-                        "value": 0.123
+            # For bewegungsdaten endpoint
+            if "bewegungsdaten" in endpoint or endpoint == "user/messwerte/bewegungsdaten":
+                logger.info("Returning mock bewegungsdaten")
+                
+                # Create a simple mock response with some data
+                mock_data = {
+                    "descriptor": {
+                        "zaehlpunktnummer": query.get("zaehlpunktnummer", "mock_zaehlpunkt"),
+                        "rolle": query.get("rolle", "mock_rolle"),
+                        "zeitpunktVon": query.get("zeitpunktVon", "2025-05-28T00:00:00.000Z"),
+                        "zeitpunktBis": query.get("zeitpunktBis", "2025-05-29T23:59:59.999Z")
                     },
-                    {
-                        "timestamp": "2025-05-28T00:30:00.000Z",
-                        "value": 0.234
-                    },
-                    {
-                        "timestamp": "2025-05-28T00:45:00.000Z",
-                        "value": 0.345
-                    },
-                    {
-                        "timestamp": "2025-05-28T01:00:00.000Z",
-                        "value": 0.456
-                    },
-                    {
-                        "timestamp": "2025-05-28T01:15:00.000Z",
-                        "value": 0.567
+                    "data": [
+                        {
+                            "timestamp": "2025-05-28T00:15:00.000Z",
+                            "value": 0.123
+                        },
+                        {
+                            "timestamp": "2025-05-28T00:30:00.000Z",
+                            "value": 0.234
+                        },
+                        {
+                            "timestamp": "2025-05-28T00:45:00.000Z",
+                            "value": 0.345
+                        },
+                        {
+                            "timestamp": "2025-05-28T01:00:00.000Z",
+                            "value": 0.456
+                        },
+                        {
+                            "timestamp": "2025-05-28T01:15:00.000Z",
+                            "value": 0.567
+                        }
+                    ]
+                }
+                
+                logger.info(f"Mock bewegungsdaten: {mock_data}")
+                return mock_data
+            
+            # For zaehlpunkte endpoint
+            elif "zaehlpunkte" in endpoint:
+                logger.info("Returning mock zaehlpunkte data")
+                
+                # If it's the specific zaehlpunkt endpoint
+                if "{zaehlpunkt}" in endpoint:
+                    # Extract the zaehlpunkt from the endpoint
+                    zaehlpunkt = endpoint.split("/")[-1]
+                    logger.info(f"Returning mock data for specific zaehlpunkt: {zaehlpunkt}")
+                    
+                    # Return data for a specific zaehlpunkt
+                    mock_data = {
+                        "anlage": {
+                            "anlage": "mock_anlage",
+                            "sparte": "mock_sparte",
+                            "typ": "TAGSTROM"
+                        },
+                        "geraet": {
+                            "equipmentnummer": "mock_equipment",
+                            "geraetenummer": "mock_geraet"
+                        },
+                        "idex": {
+                            "customerInterface": "mock_interface",
+                            "displayLocked": False,
+                            "granularity": "15M"
+                        },
+                        "verbrauchsstelle": {
+                            "haus": "mock_haus",
+                            "hausnummer1": "123",
+                            "hausnummer2": "",
+                            "land": "AT",
+                            "ort": "Vienna",
+                            "postleitzahl": "1010",
+                            "stockwerk": "1",
+                            "strasse": "Mock Street",
+                            "strasseZusatz": "",
+                            "tuernummer": "1"
+                        },
+                        "zaehlpunktname": "Mock Zaehlpunkt",
+                        "zaehlpunktnummer": zaehlpunkt
                     }
-                ]
-            }
-            
-            logger.info(f"Mock bewegungsdaten: {mock_data}")
-            return mock_data
-        
-        # For zaehlpunkte endpoint
-        elif "zaehlpunkte" in endpoint:
-            logger.info("Returning mock zaehlpunkte data")
-            
-            mock_data = {
-                "zaehlpunkte": [
-                    {
-                        "zaehlpunktnummer": "AT0010000000000000000000000000000",
-                        "anlagentyp": "TAGSTROM",
-                        "adresse": "Mock Address 123, 1010 Vienna",
-                        "rollen": ["V001", "V002"]
+                    
+                    logger.info(f"Mock zaehlpunkt data: {mock_data}")
+                    return mock_data
+                
+                # For zaehlpunkt messwerte endpoint
+                elif "messwerte" in endpoint:
+                    logger.info("Returning mock zaehlpunkt messwerte data")
+                    
+                    # Create mock messwerte data
+                    mock_data = {
+                        "zaehlpunkt": query.get("zaehlpunkt", "mock_zaehlpunkt"),
+                        "zaehlwerke": [
+                            {
+                                "einheit": "kWh",
+                                "obisCode": "1-0:1.8.0",
+                                "messwerte": [
+                                    {
+                                        "messwert": 123000,
+                                        "qualitaet": "A",
+                                        "zeitVon": "2025-05-28T00:15:00.000Z",
+                                        "zeitBis": "2025-05-28T00:30:00.000Z"
+                                    },
+                                    {
+                                        "messwert": 234000,
+                                        "qualitaet": "A",
+                                        "zeitVon": "2025-05-28T00:30:00.000Z",
+                                        "zeitBis": "2025-05-28T00:45:00.000Z"
+                                    },
+                                    {
+                                        "messwert": 345000,
+                                        "qualitaet": "A",
+                                        "zeitVon": "2025-05-28T00:45:00.000Z",
+                                        "zeitBis": "2025-05-28T01:00:00.000Z"
+                                    }
+                                ]
+                            }
+                        ]
                     }
-                ]
-            }
+                    
+                    logger.info(f"Mock zaehlpunkt messwerte data: {mock_data}")
+                    return mock_data
+                
+                # For general zaehlpunkte endpoint
+                else:
+                    mock_data = {
+                        "items": {
+                            "anlage": {
+                                "anlage": "mock_anlage",
+                                "sparte": "mock_sparte",
+                                "typ": "TAGSTROM"
+                            },
+                            "geraet": {
+                                "equipmentnummer": "mock_equipment",
+                                "geraetenummer": "mock_geraet"
+                            },
+                            "idex": {
+                                "customerInterface": "mock_interface",
+                                "displayLocked": False,
+                                "granularity": "15M"
+                            },
+                            "verbrauchsstelle": {
+                                "haus": "mock_haus",
+                                "hausnummer1": "123",
+                                "hausnummer2": "",
+                                "land": "AT",
+                                "ort": "Vienna",
+                                "postleitzahl": "1010",
+                                "stockwerk": "1",
+                                "strasse": "Mock Street",
+                                "strasseZusatz": "",
+                                "tuernummer": "1"
+                            },
+                            "zaehlpunktname": "Mock Zaehlpunkt",
+                            "zaehlpunktnummer": "AT0010000000000000000000000000000"
+                        }
+                    }
+                    
+                    logger.info(f"Mock zaehlpunkte data: {mock_data}")
+                    return mock_data
             
-            logger.info(f"Mock zaehlpunkte data: {mock_data}")
-            return mock_data
+            # For any other endpoint
+            else:
+                logger.info("Returning generic mock data")
+                return {"status": "success", "message": "Mock data for testing"}
         
-        # For any other endpoint
-        else:
-            logger.info("Returning generic mock data")
-            return {"status": "success", "message": "Mock data for testing"}
+        # If we're not using mock data, make the real API call
+        self._access_valid_or_raise()
+
+        if base_url is None:
+            base_url = const.API_URL
+        url = parse.urljoin(base_url, endpoint)
+
+        if query:
+            url += ("?" if "?" not in endpoint else "&") + parse.urlencode(query)
+
+        # Set up headers with API key
+        headers = {
+            "X-Gateway-APIKey": const.API_KEY,
+        }
+        
+        # Add authorization header if we have an access token
+        if self._access_token:
+            headers["Authorization"] = f"Bearer {self._access_token}"
+
+        if extra_headers:
+            headers.update(extra_headers)
+
+        if data:
+            headers["Content-Type"] = "application/json"
+
+        logger.info(f"Making API request to {url}")
+        logger.info(f"Headers: {headers}")
+        
+        try:
+            response = self.session.request(
+                method, url, headers=headers, json=data, timeout=timeout
+            )
+            
+            logger.info(f"Response status: {response.status_code}")
+            logger.info(f"Response headers: {response.headers}")
+            
+            # Log a preview of the response content
+            content_preview = response.content[:500].decode('utf-8', errors='replace')
+            logger.info(f"Response content preview: {content_preview}")
+            
+            response.raise_for_status()
+            
+            if return_response:
+                return response
+                
+            return response.json()
+            
+        except requests.exceptions.RequestException as exception:
+            status_code = getattr(exception.response, "status_code", None)
+            content = getattr(exception.response, "content", b"").decode("utf-8", errors="ignore")
+            logger.error(f"API request failed: {url} - Status: {status_code}, Error: {content}")
+            raise SmartmeterConnectionError(
+                f"API request failed: {url} - Status: {status_code}, Error: {content}"
+            ) from exception
+        except Exception as e:
+            logger.error(f"Unexpected error in API call: {str(e)}")
+            raise SmartmeterConnectionError(f"Unexpected error in API call: {str(e)}")
         
         # The code below is kept for reference but not used
         """
@@ -682,10 +846,35 @@ class Smartmeter:
         """
         logger.info("Getting zaehlpunkte")
         try:
-            data = self._call_api("zaehlpunkte")
+            # Use the endpoint from the schema
+            data = self._call_api(const.ENDPOINTS["zaehlpunkte"])
             
-            # Check if we got mock data
-            if data.get("zaehlpunkte") and isinstance(data.get("zaehlpunkte"), list):
+            # Check if we got mock data or real data
+            if data.get("items") and isinstance(data.get("items"), dict):
+                # This is the format from the schema
+                logger.info("Got zaehlpunkte data in schema format")
+                
+                # Convert to the format expected by the rest of the code
+                mock_contracts = []
+                mock_contract = {
+                    "geschaeftspartner": "customer_id",
+                    "zaehlpunkte": []
+                }
+                
+                # Add the zaehlpunkt to the contract
+                zp = data.get("items")
+                zp_data = {
+                    "zaehlpunktnummer": zp.get("zaehlpunktnummer"),
+                    "anlage": {
+                        "typ": zp.get("anlage", {}).get("typ", "TAGSTROM")
+                    }
+                }
+                mock_contract["zaehlpunkte"].append(zp_data)
+                mock_contracts.append(mock_contract)
+                return mock_contracts
+            
+            # Check if we got mock data in our custom format
+            elif data.get("zaehlpunkte") and isinstance(data.get("zaehlpunkte"), list):
                 # Convert the mock data to the expected format
                 logger.info("Converting mock zaehlpunkte data to expected format")
                 
@@ -706,6 +895,8 @@ class Smartmeter:
                 mock_contracts.append(mock_contract)
                 return mock_contracts
             
+            # If we got some other format, try to use it as is
+            logger.info(f"Got zaehlpunkte data in unknown format: {data}")
             return data
             
         except Exception as e:
@@ -992,6 +1183,70 @@ class Smartmeter:
                 anlagetype = const.AnlagenType.CONSUMING
                 logger.info(f"Using mock zaehlpunkt: {zaehlpunkt}")
 
+            # Set date range defaults
+            if date_until is None:
+                date_until = date.today()
+
+            if date_from is None:
+                date_from = date_until - relativedelta(years=3)
+
+            # Try using the new API endpoint from the schema
+            try:
+                # Query parameters for the new API
+                query = {
+                    "datumVon": date_from.strftime("%Y-%m-%d"),
+                    "datumBis": date_until.strftime("%Y-%m-%d"),
+                    "wertetyp": valuetype.value,
+                    "zaehlpunkt": zaehlpunkt
+                }
+
+                extra = {
+                    "Accept": "application/json"
+                }
+
+                logger.info(f"Calling new API with query: {query}")
+                
+                # Use the zaehlpunkt_messwerte endpoint from the schema
+                endpoint = const.ENDPOINTS["zaehlpunkt_messwerte"].replace("{zaehlpunkt}", zaehlpunkt)
+                data = self._call_api(
+                    endpoint,
+                    base_url=const.API_URL,
+                    query=query,
+                    extra_headers=extra,
+                )
+                
+                logger.info(f"Got response from new API: {data}")
+                
+                # Convert the response to the format expected by the rest of the code
+                if data.get("zaehlpunkt") == zaehlpunkt and data.get("zaehlwerke"):
+                    logger.info("Converting API response to expected format")
+                    
+                    # Create a bewegungsdaten response
+                    bewegungsdaten = {
+                        "descriptor": {
+                            "zaehlpunktnummer": zaehlpunkt,
+                            "rolle": "V002",  # Default role
+                            "zeitpunktVon": date_from.strftime("%Y-%m-%dT%H:%M:00.000Z"),
+                            "zeitpunktBis": date_until.strftime("%Y-%m-%dT23:59:59.999Z")
+                        },
+                        "data": []
+                    }
+                    
+                    # Extract the messwerte from the zaehlwerke
+                    for zaehlwerk in data.get("zaehlwerke", []):
+                        for messwert in zaehlwerk.get("messwerte", []):
+                            bewegungsdaten["data"].append({
+                                "timestamp": messwert.get("zeitVon"),
+                                "value": messwert.get("messwert") / 1000.0  # Convert to kWh
+                            })
+                    
+                    logger.info(f"Converted {len(bewegungsdaten['data'])} data points")
+                    return bewegungsdaten
+            
+            except Exception as e:
+                logger.warning(f"Error using new API: {str(e)}")
+                # Fall back to the old API
+            
             # Determine role based on anlage type and value type
             if anlagetype == const.AnlagenType.FEEDING:
                 if valuetype == const.ValueType.DAY:
@@ -1004,14 +1259,7 @@ class Smartmeter:
                 else:
                     rolle = const.RoleType.QUARTER_HOURLY_CONSUMING.value
 
-            # Set date range defaults
-            if date_until is None:
-                date_until = date.today()
-
-            if date_from is None:
-                date_from = date_until - relativedelta(years=3)
-
-            # Query parameters
+            # Query parameters for the old API
             query = {
                 "geschaeftspartner": customer_id,
                 "zaehlpunktnummer": zaehlpunkt,
@@ -1025,7 +1273,7 @@ class Smartmeter:
                 "Accept": "application/json"
             }
 
-            logger.info(f"Calling API with query: {query}")
+            logger.info(f"Calling old API with query: {query}")
             data = self._call_api(
                 f"user/messwerte/bewegungsdaten",
                 base_url=const.API_URL_ALT,
