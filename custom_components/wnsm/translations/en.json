@@ -1,0 +1,18 @@
+{
+    "config": {
+        "error": {
+            "auth": "Username/password invalid",
+            "cannot_connect": "Unable to connect"
+        },
+        "step": {
+            "user": {
+                "title": "Wiener Netze Smartmeter Authentication",
+                "description": "Enter your Wiener Netze Smartmeter credentials.",
+                "data": {
+                    "username": "Username",
+                    "password": "Password"
+                }
+            }
+        }
+    }
+}
